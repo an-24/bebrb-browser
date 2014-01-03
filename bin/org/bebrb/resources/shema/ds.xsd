@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.bebrb.org/schema" xmlns:tns="http://www.bebrb.org/schema" elementFormDefault="qualified">
+
+    <element name="root">
+    	<complexType>
+    	 <all>
+		    <element name="datasources" minOccurs="0" maxOccurs="1">
+		    	<complexType>
+    				<sequence>
+		   				<element name="datasource" type="tns:datasourceType" minOccurs="0" maxOccurs="unbounded">
+		   				</element>
+    				</sequence>
+		    	</complexType>
+    			<unique name="uniqDS">
+					<selector xpath="tns:datasource"/>
+					<field    xpath="@id"/>		    	
+    			</unique>
+				<keyref name="refKeySQL" refer="tns:uniqSQLAttr">
+					<selector xpath="tns:datasource"/>
+					<field xpath="@key"/>
+				</keyref>
+		    </element>
+		    <element name="references" minOccurs="0" maxOccurs="1">
+		    	<complexType>
+    				<sequence>
+		   				<element name="reference" type="tns:referenceType" minOccurs="0" maxOccurs="unbounded">
+							<keyref name="refKeyReference" refer="tns:uniqAttr">
+								<selector xpath="."/>
+								<field xpath="@key"/>
+							</keyref>
+							<keyref name="refParentKeyReference" refer="tns:uniqAttr">
+								<selector xpath="."/>
+								<field xpath="@parentkey"/>
+							</keyref>
+							<keyref name="refFolder" refer="tns:uniqAttr">
+								<selector xpath="tns:folder"/>
+								<field xpath="@attribute"/>
+							</keyref>
+		   				</element>
+    				</sequence>
+		    	</complexType>
+    			<unique name="uniqRef">
+					<selector xpath="tns:reference"/>
+    				<field    xpath="@id"/>		    	
+				</unique>
+		    </element>
+		    
+    	 </all>	
+    	</complexType>
+
+		<keyref name="refDS" refer="tns:uniqRef">
+			<selector xpath="tns:datasources/tns:datasource/tns:reference"/>
+			<field xpath="@id"/>
+		</keyref>
+		
+    </element>
+
+		    	
+    <simpleType name="cdata">
+    	<restriction base="string">
+    	</restriction>
+    </simpleType>
+
+	<group name="sqlDataSource">
+   		<sequence>
+   			<element name="sql" type="tns:cdata" maxOccurs="1" />
+	   	    <element name="attributes" maxOccurs="1">
+				<complexType>
+	   				<sequence>
+	   					<element name="attribute" type="tns:attributeType" maxOccurs="unbounded"/>
+	   				</sequence>
+				</complexType>
+    			<unique name="uniqSQLAttr">
+					<selector xpath="tns:attribute"/>
+					<field    xpath="@name"/>		    	
+    			</unique>
+	   	    </element>
+   			<element name="insert" type="tns:rpcType" minOccurs="0" maxOccurs="1"/>
+   			<element name="update" type="tns:rpcType" minOccurs="0" maxOccurs="1"/>
+ 			<element name="delete" type="tns:rpcType" minOccurs="0" maxOccurs="1"/>
+   		</sequence>
+   	</group>
+
+   	<complexType name="datasourceType">
+   		<sequence>
+   			<choice maxOccurs="1" minOccurs="1">
+   				<group ref="tns:sqlDataSource"/>
+   				<element name="reference" maxOccurs="1">
+   					<complexType>
+   						<attribute name="id" type="QName" use="required"></attribute>
+   						<attribute name="view" type="string"/>
+   					</complexType>
+   				</element>
+   			</choice>
+   			<element name="database" type="tns:databaseType" minOccurs="0"/>
+   		</sequence>
+   		<attribute name="id" type="QName" use="required"/>
+   		<attribute name="key" type="QName"/>
+   		<attribute name="lazy" type="boolean" default="true"/>
+ 	    <attribute name="cache-control" type="tns:cacheControlType" default="None"/>
+ 	  	<!-- for cache-control = IsModified -->
+	  	<attribute name="actualDate" type="date"/>
+    </complexType>
+
+   	<complexType name="referenceType">
+   	  <all>
+   	    <element name="attributes" maxOccurs="1">
+			<complexType>
+   				<sequence>
+   					<element name="attribute" type="tns:attributeType" maxOccurs="unbounded"/>
+   				</sequence>
+			</complexType>
+    		<unique name="uniqAttr">
+				<selector xpath="tns:attribute"/>
+				<field    xpath="@name"/>		    	
+    		</unique>
+   	    </element>
+   		<element name="views" maxOccurs="1">
+			<complexType>
+   				<sequence>
+   					<element name="view" type="tns:viewType" maxOccurs="unbounded"/>
+   				</sequence>
+				<attribute name="default" type="QName"/>
+			</complexType>
+    		<unique name="uniqView">
+				<selector xpath="tns:view"/>
+				<field    xpath="@name"/>		    	
+    		</unique>
+			<keyref name="refDefaultView" refer="tns:uniqView">
+				<selector xpath="."/>
+				<field xpath="@default"/>
+			</keyref>
+   		</element>
+   		<element name="folder" minOccurs="0">
+			<complexType>
+ 	  			<attribute name="attribute" type="QName" use="required"/>
+ 	  			<attribute name="value" type="string" use="required"/>
+ 	  			<attribute name="order" type="string" default="asc"/>
+ 	  			<attribute name="сanсhoise" type="boolean" default="false"/>
+			</complexType>
+   		</element>
+   		<element name="database" type="tns:databaseType" minOccurs="0"/>
+   		
+   		<element name="get" type="tns:cdata" minOccurs="1" maxOccurs="1"/>
+   		<element name="insert" type="tns:rpcType" minOccurs="0" maxOccurs="1"/>
+   		<element name="update" type="tns:rpcType" minOccurs="0" maxOccurs="1"/>
+ 		<element name="delete" type="tns:rpcType" minOccurs="0" maxOccurs="1"/>
+   	  </all>	
+ 	  <attribute name="id" type="QName" use="required"/>
+ 	  <attribute name="type" type="tns:referenceBookType" use="required"/>
+ 	  <attribute name="title" type="string" use="required"/>
+ 	  <attribute name="history" type="boolean"/>
+ 	  <attribute name="key" type="QName" use="required"/>
+ 	  <attribute name="cache-control" type="tns:cacheControlType" default="None"/>
+ 	  <!-- TODO: check needed required if type = Hierarchy -->
+ 	  <attribute name="parentkey" type="QName"/>
+ 	  <attribute name="mastertable" type="QName"/>
+ 	  <!-- for cache-control = IsModified -->
+	  <attribute name="actualDate" type="date"/>
+    </complexType>
+
+   	<complexType name="viewType">
+    		<sequence>
+			<element name="sql" type="tns:cdata" maxOccurs="1" />
+    		</sequence>
+		<attribute name="name" type="QName" use="required"/>
+   	    <attribute name="title" type="string" use="required"></attribute>
+   		<attribute name="lazy" type="boolean" default="true"/>
+    </complexType>
+    
+    <complexType name="rpcType" mixed="true">
+    <!-- TODO check ref or not empty body -->
+    		<sequence>
+			<element name="arguments" minOccurs="0" maxOccurs="1">
+			<complexType>
+				<sequence>
+					<element name="arg" minOccurs="0" maxOccurs="unbounded">
+						<complexType>
+							<attribute name="name" type="QName" use="required"/>
+							<attribute name="type" type="tns:attrType" use="required"/>
+						</complexType>
+					</element>
+				</sequence>
+			</complexType>
+			</element>
+    		</sequence>
+		<attribute name="ref" type="QName"/>
+    </complexType>
+  	
+  	<simpleType name="referenceBookType">
+	    <restriction base="string">
+	      <enumeration value="Simple"/>
+	      <enumeration value="Linear"/>
+	      <enumeration value="Hierarchy"/>
+	    </restriction>
+  	</simpleType>
+  	
+  	<simpleType name="cacheControlType">
+	    <restriction base="string">
+	      <enumeration value="None"/>
+	      <enumeration value="WithinSession"/>
+	      <enumeration value="IsModified"/>
+	    </restriction>
+  	</simpleType>
+
+  	<simpleType name="attrType">
+	    <restriction base="string">
+	      <enumeration value="Integer"/>
+	      <enumeration value="String"/>
+	      <enumeration value="Money"/>
+	      <enumeration value="Double"/>
+	      <enumeration value="Date"/>
+	      <enumeration value="Image"/>
+	      <enumeration value="Text"/>
+	      <enumeration value="Blob"/>
+	      <enumeration value="Boolean"/>
+	    </restriction>
+  	</simpleType>
+
+   	<complexType name="attributeType">
+		<attribute name="name" type="QName" use="required"/>
+   	    <attribute name="caption" type="string" default="@name"/>
+   	    <attribute name="visible" type="boolean" default="true"/>
+   	    <attribute name="mandatory" type="boolean" default="false"/>
+		<attribute name="type" type="tns:attrType" use="required"/>
+		<attribute name="size" type="integer"/>
+		<attribute name="fkey" type="string"/>
+    </complexType>
+    
+    <complexType name="databaseType">
+    		<sequence>
+ 	 		<element name="params" minOccurs="0" maxOccurs="unbounded">
+ 	 			<complexType>
+ 	 				<sequence>
+    	 					<element name="param" minOccurs="0" maxOccurs="unbounded">
+    	 						<complexType>
+    	 							<attribute name="name" type="string" use="required"/>
+    	 							<attribute name="value" type="string" use="required"/>
+    	 						</complexType>
+    	 					</element>
+ 	 				</sequence>
+ 	 			</complexType>
+ 	 		</element>
+	    	</sequence>
+		<attribute name="driver" type="string" use="required"/>
+		<attribute name="url" type="anyURI" use="required"/>
+		<attribute name="user" type="string"/>
+		<attribute name="password" type="string"/>
+		<attribute name="ident-case-sensitive" type="boolean" default="true"/>
+	</complexType>
+</schema>

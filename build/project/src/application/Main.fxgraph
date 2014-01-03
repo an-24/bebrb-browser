@@ -1,0 +1,17 @@
+package application
+
+import javafx.scene.layout.BorderPane
+import application.MainController
+import javafx.scene.layout.HBox
+import javafx.scene.control.TabPane
+
+component Main controlledby MainController {
+	BorderPane {
+		minHeight: 800,
+		minWidth : 1000,
+		top:TabPane id mainPageControl {
+			tabClosingPolicy : "ALL_TABS"
+		}
+	}
+	
+}

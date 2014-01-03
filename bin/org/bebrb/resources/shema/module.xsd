@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.bebrb.org/schema" xmlns:tns="http://www.bebrb.org/schema" elementFormDefault="qualified">
+    <element name="root">
+    	<complexType>
+    		<sequence>
+    			<element name="function" type="tns:rpcType"  minOccurs="0" maxOccurs="unbounded"/>
+    		</sequence>
+    	</complexType>
+    </element>
+    
+    <complexType name="rpcType" mixed="true">
+   		<sequence>
+		<element name="arguments" minOccurs="0" maxOccurs="1">
+		<complexType>
+			<sequence>
+				<element name="arg" minOccurs="0" maxOccurs="unbounded">
+					<complexType>
+						<attribute name="name" type="QName" use="required"/>
+						<attribute name="type" type="tns:attrType" use="required"/>
+					</complexType>
+				</element>
+			</sequence>
+		</complexType>
+		</element>
+   		</sequence>
+		<attribute name="name" type="QName" use="required"/>
+    </complexType>
+  	
+
+  	<simpleType name="attrType">
+	    <restriction base="string">
+	      <enumeration value="Integer"/>
+	      <enumeration value="String"/>
+	      <enumeration value="Money"/>
+	      <enumeration value="Double"/>
+	      <enumeration value="Date"/>
+	      <enumeration value="Image"/>
+	      <enumeration value="Text"/>
+	      <enumeration value="Blob"/>
+	      <enumeration value="Boolean"/>
+	    </restriction>
+  	</simpleType>
+    
+</schema>

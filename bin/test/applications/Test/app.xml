@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="http://www.bebrb.org/schema" 
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	  
+	<info name="Test" title="Тестовое приложение"/>
+	<versions default="1-2-14">
+		<ver number="1-2-14" release="2013-11-01">
+			<data>
+				<datamodule name="datasources1.xml"/>
+			</data>
+			<config>
+				<option name="m17fr" value="0122"/>
+			</config>
+			<database driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://localhost\\SQLEXPRESS:1433;databaseName=test;" user="sa" password="rol" ident-case-sensitive="false"/>
+			<!-- <database driver="org.firebirdsql.jdbc.FBDriver" url="jdbc:firebirdsql:localhost/3050:D:\WORK\bebrb\src\test\db\fb\test.fdb" user="sysdba" password="masterkey"  ident-case-sensitive="false">-->
+			<!-- <database driver="org.firebirdsql.jdbc.FBDriver" url="jdbc:firebirdsql:localhost/3050:/Users/andrej/Documents/workspace/bebrb/src/test/db/fb/test.fdb" user="sysdba" password="rolling"  ident-case-sensitive="false">
+				<params>
+					<param name="charSet" value="UTF-8"/>
+					<param name="encoding" value="UTF8"/>
+				</params>
+			</database>
+			 -->
+		</ver>
+		<ver number="1-0-0"  release="2013-09-01">
+		    Первый официальный релиз
+		</ver>
+	</versions>
+    <performance>
+    	<database-pool max="6"/>
+    </performance>
+</root>

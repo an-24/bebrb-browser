@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="http://www.bebrb.org/schema" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns:account="modules/acc.xml"
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<datasources>
+	  
+	  <datasource id="q2" key="trade_id" lazy="true" cache-control="IsModified">
+		  <sql><![CDATA[
+		    	select * 
+		    	from trade
+		  ]]></sql>
+		  <attributes>
+		  	<attribute type="Integer" name="trade_id" visible="false"/>
+		  	<attribute type="Integer" name="product_id" visible="false"/>
+		  	<attribute type="Integer" name="company_id" visible="false"/>
+		  	<attribute type="Money" name="trade_price" visible="true"  caption="Цена"/>
+		  	<attribute type="Double" name="trade_quantity" visible="true"  caption="Кол-во"/>
+		  	<attribute type="Date" name="trade_date" visible="true"  caption="Дата прихода"/>
+		  </attributes>
+	  	  <insert>
+	  	  		<arguments>
+	  				<arg name="a" type="Integer"/>
+	  				<arg name="b" type="Integer"/>
+	  				<arg name="c" type="Integer"/>
+	  	   		</arguments>
+	  			{
+	  			   return a*b*c;
+	  			}
+	  	   </insert>
+	  </datasource>
+	  
+	  <datasource id="q1" lazy="false">
+	  	<reference id="r1" view="v1"></reference>
+	  </datasource>
+	</datasources>
+	
+	<references>
+	  <reference id="r1" type="Simple" title="Поставщики" key="COMPANY_ID">
+	    <attributes>
+	    	<attribute type="Integer" name="COMPANY_ID" visible="false"/>
+	    	<attribute type="String" name="COMPANY_NAME" size="80" caption="Поставщик"/>
+	    	<attribute type="String" name="COMPANY_ADDRESS" size="160" caption="Адрес поставщика"/>
+	    </attributes>
+	  	<views default="v1">
+	  		<view name="v1" title="По умолчанию">
+	  			<sql>
+	  			  <![CDATA[
+	    			select company_id,
+	    			       company_name,
+	    			       company_address 
+	    			from company
+	    			]]>
+	    			</sql>	
+	  		</view>
+	  		<view name="v2" title="Избранные">
+	  			<sql>
+	    			select company_id,
+	    			       company_name,
+	    			       company_address
+	    			from company
+	    			where company_name like :mask
+	    			</sql>	
+	  		</view>
+	  	</views>
+	  	<get>
+	  		select * 
+	  		from company
+	  		where company_id = :id
+	  	</get>
+	  	<insert>
+	  		<arguments>
+	  			<arg name="a" type="Integer"/>
+	  			<arg name="b" type="Double"/>
+	  			<arg name="c" type="Double"/>
+	  		</arguments>
+	  		{
+				var st=connection.prepareStatement("select * from product");
+				var rs = st.executeQuery();
+				var s = ""; 
+				while(rs.next()) {
+					s+=","+rs.getString("product_name");
+				}	 
+				var m = modules.get("account");
+				var t1 = m.func("test").exec(101);
+				log(config.getParam("m17fr"));
+				log(data.getDataSource("q2").insert(1,2,3));
+				log(config.getResourceString("ex01")); 	
+	  			return s;
+	  		}	
+	  	</insert>
+	  	<delete ref="account.operdel"/>
+	  </reference>
+
+	  <reference id="r2" type="Hierarchy" title="Поставщики-Все" key="company_id" parentkey="company_parent_id">
+	    <attributes>
+	    	<attribute type="Integer" name="company_id" visible="false"/>
+	    	<attribute type="String" name="company_name" size="80" caption="Поставщик"/>
+	    	<attribute type="Integer" name="company_parent_id" visible="false"/>
+	    	<attribute type="Integer" name="kind" visible="false"/>
+	    </attributes>
+	    <folder attribute="kind" value="1"/>
+	  	<views default="v1">
+	  		<view name="v1" title="По умолчанию">
+	  			<sql>
+	  			  <![CDATA[
+	    			select company_id,
+	    			       company_name,
+	    			       company_parent_id,
+	    			       1 kind
+	    			from company
+	    			]]>
+	    			</sql>	
+	  		</view>
+	  	</views>
+	  	<get>
+	  		select * 
+	  		from company
+	  		where company_id = :id
+	  	</get>
+	  </reference>
+
+	</references>
+</root>
