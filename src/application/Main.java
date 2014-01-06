@@ -12,10 +12,15 @@ import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.fxml.FXMLLoader;
 
 
 public class Main extends Application {
+	public static final String DSP_PROTOCOL = "dsp://";
+	public static String wallPaperName = "images/default.jpg"; //TODO config
+	
+	
 	static Locale locale = Locale.getDefault();
 	static ResourceBundle resStrings;
 	static Logger log = Logger.getLogger("bebrb");
@@ -23,7 +28,7 @@ public class Main extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			BorderPane root = (BorderPane)loadNode("Main.fxml");
+			Pane root = (Pane)loadNode("Main.fxml");
 			Scene scene = new Scene(root);
 			scene.getStylesheets().add(getClass().getResource("caspian-silver.css").toExternalForm());
 			primaryStage.setTitle("Bebrb");
@@ -50,7 +55,18 @@ public class Main extends Application {
 		return null;
 	}
 
+	public static <T> T loadNodeController(String name) throws IOException {
+		FXMLLoader loader = getLoader(name);
+		loader.load();
+		return loader.getController();
+	} 
+	
+	public static FXMLLoader getLoader(String name) {
+		return new FXMLLoader(Main.class.getResource(name),resStrings);
+	}
+
 	public static ResourceBundle getStrings() {
 		return resStrings;
-	} 
+	}
+
 }

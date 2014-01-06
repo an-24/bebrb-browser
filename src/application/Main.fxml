@@ -4,12 +4,12 @@
 -->
 
 <?import java.lang.*?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="application.MainController" minHeight="800" minWidth="1000">
+<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="application.MainController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" >
+  	<children>
+		<TabPane fx:id="mainPageControl" tabClosingPolicy="ALL_TABS" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/> 
+	</children>
+</AnchorPane>
 
-	<top>
-		<TabPane fx:id="mainPageControl" tabClosingPolicy="ALL_TABS"/> 
-	</top>
-</BorderPane>

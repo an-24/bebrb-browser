@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="323.0" prefWidth="368.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.ApplicationListController">
+  <children>
+    <TitledPane fx:id="tpApplications" alignment="CENTER_LEFT" animated="false" collapsible="false" contentDisplay="LEFT" prefHeight="379.0" prefWidth="576.0" text="Application list" underline="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <content>
+        <AnchorPane id="AnchorPane" prefHeight="307.0" prefWidth="498.0">
+          <children>
+            <ListView fx:id="lvApplications" prefHeight="375.0" prefWidth="597.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+          </children>
+          <padding>
+            <Insets bottom="45.0" left="10.0" right="10.0" top="10.0" />
+          </padding>
+        </AnchorPane>
+      </content>
+    </TitledPane>
+    <Button fx:id="bOk" defaultButton="true" mnemonicParsing="false" text="Choise" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" />
+  </children>
+</AnchorPane>

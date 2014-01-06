@@ -1,21 +1,29 @@
 package application;
 
+import java.io.IOException;
+import java.util.logging.Level;
+
 import org.bebrb.client.controls.DataGridFX;
 import org.bebrb.client.data.RecordImpl;
 
+import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 
 public class MainController {
 	
@@ -23,7 +31,7 @@ public class MainController {
 	private TabPane mainPageControl;
 
 	private int lockTabs = 0;
-	
+
 	public Tab newPage() {
 		lockTabs++;
 		final ObservableList<Tab> tabs = mainPageControl.getTabs();
@@ -40,7 +48,22 @@ public class MainController {
 		});
 		tabs.add(appTab);
 	    tabs.get(0).setClosable(tabs.size()>1);
-		appTab.setContent(Main.loadNode("TabInner.fxml"));
+	    
+	    FXMLLoader loader = Main.getLoader("TabInner.fxml");
+		try {
+			// вкладка
+			appTab.setContent((Parent) loader.load());
+			((TabInnerController)loader.getController()).setOwner(appTab);
+			AnchorPane pane = (AnchorPane) appTab.getContent();
+			pane.setMaxSize(Region.USE_COMPUTED_SIZE,Region.USE_COMPUTED_SIZE);
+			// wallpaper
+			setWallPaper(appTab,Main.wallPaperName);
+			// титульная страница
+			loader = Main.getLoader("TitlePage.fxml");
+			((BorderPane)pane.getChildren().get(0)).setCenter((Parent) loader.load());
+		} catch (IOException e) {
+			Main.log.log(Level.SEVERE, e.getMessage(), e);
+		}
 		//add +
 		Tab plusTab = new Tab("+");
 		plusTab.setClosable(false);
@@ -56,10 +79,16 @@ public class MainController {
 		return appTab;
 	}
 	
+	private void setWallPaper(Tab tab,String wallPaperName) {
+		String image = Main.class.getResource(wallPaperName).toExternalForm();
+		tab.getContent().setStyle("-fx-background-image: url('" + image + "');");
+	}
+
 	@FXML
 	public void initialize() {
 		Tab newtab = newPage();
-		BorderPane pane = (BorderPane) newtab.getContent();
+
+		
 		//FIXME example controls
 		
 		
@@ -70,7 +99,6 @@ public class MainController {
 		menu.setMinWidth(24);
 		menu.setMinHeight(24);
 		pane.setLeft(menu);
-*/		
 		//pane.getStyleClass().add("apptest");
 		DataGridFX grid = new DataGridFX();
 		BorderPane.setAlignment(grid, Pos.CENTER);
@@ -78,6 +106,7 @@ public class MainController {
 		pane.setCenter(grid);
 		//grid.setPrefSize(200, 600);
 		//pane.autosize();
+*/		
 		
 	}
 }
