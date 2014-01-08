@@ -29,7 +29,7 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			Pane root = (Pane)loadNode("Main.fxml");
-			Scene scene = new Scene(root);
+			Scene scene = new Scene(root, 600,600);
 			scene.getStylesheets().add(getClass().getResource("caspian-silver.css").toExternalForm());
 			primaryStage.setTitle("Bebrb");
 			//primaryStage.getIcons().add(new Image(getClass().getResourceAsStream("images/icon.png")));

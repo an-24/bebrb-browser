@@ -10,6 +10,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -19,6 +20,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
@@ -36,17 +38,24 @@ import org.bebrb.server.net.CommandHello;
 import org.bebrb.server.net.CommandHello.AppInfo;
 
 import utils.LocaleUtils;
+import application.NavigateStack.CommandPoint;
 
 public class TabInnerController {
 	@FXML
 	private BorderPane root;
 	@FXML
 	private ComboBox<String> comboUri;
+	@FXML
+	private Button btnBack;
+	@FXML
+	private Button btnNext;
 	
 	private Tab owner;
 	private Client query;
 	private ApplicationContext app;
-
+	
+	private NavigateStack navStack = new NavigateStack();
+	
 	private OnError errorHandler = new OnError() {
 		@Override
 		public void errorCame(Exception ex) {
@@ -71,6 +80,25 @@ public class TabInnerController {
 		} catch (Exception e) {
 			Main.log.log(Level.SEVERE, e.getMessage(), e);
 		}
+		btnBack.setDisable(true);
+		btnBack.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				navStack.back();
+				lockControl();
+			}
+		});
+		
+		btnNext.setDisable(true);
+		btnNext.setOnAction(new EventHandler<ActionEvent>() {
+			
+			@Override
+			public void handle(ActionEvent event) {
+				navStack.next();
+				lockControl();
+			}
+		});
+		
 		
 		
 		//FIXME demo
@@ -127,6 +155,7 @@ public class TabInnerController {
 		
 	}
 	
+
 	@Override
 	protected void finalize() throws Throwable {
 		interrupt();
@@ -224,7 +253,15 @@ public class TabInnerController {
 						list.getItems().add(app);
 					}
 					ctrl.getButtonOk().setDisable(list.getItems().isEmpty());
-					root.setCenter(ctrl.getRoot());
+					// show
+					cleanScreen();
+					Pane lv = ctrl.getRoot();
+					((Pane)root.getCenter()).getChildren().add(lv);
+					AnchorPane.setTopAnchor(lv, 40D);
+					AnchorPane.setLeftAnchor(lv, 60D);
+					AnchorPane.setRightAnchor(lv, 60D);
+					AnchorPane.setBottomAnchor(lv, 40D);
+					
 				} else {
 					printInfo(Main.getStrings().getString("listApplicationIsEmpty"));
 				}
@@ -242,7 +279,31 @@ public class TabInnerController {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
-					login(list.getSelectionModel().getSelectedItem());
+					final AppInfo selectedApp =  list.getSelectionModel().getSelectedItem();
+					// push save point
+					CommandPoint savepoint = new CommandPoint(){
+						@Override
+						public void retry() {
+							try {
+								handleHello(response);
+							} catch (Exception e) {
+								Main.log.log(Level.SEVERE, e.getMessage(),e);
+							}
+						}
+
+						@Override
+						public void next() {
+							try {
+								login(selectedApp);
+							} catch (Exception e) {
+								Main.log.log(Level.SEVERE, e.getMessage(),e);
+							}
+						}
+					};
+					navStack.push(savepoint);
+					// next command
+					savepoint.next();
+					lockControl();
 				} catch (Exception e) {
 					Main.log.log(Level.SEVERE, e.getMessage(),e);
 				}
@@ -250,18 +311,26 @@ public class TabInnerController {
 
 		});
 	}
+
+	private void cleanScreen() {
+		root.setCenter(new AnchorPane());
+	}
+
+
 	private void login(AppInfo app) throws Exception {
 		final LoginController ctrl = Main.loadNodeController("Login.fxml");
 		
+		/*
 		AnchorPane pane = new AnchorPane();
 		root.setCenter(pane);
-		Dialog dlg = new Dialog(pane, ctrl.getRoot());
+		*/
+		Dialog dlg = new Dialog((Pane)root.getCenter(), ctrl.getRoot());
 		dlg.showForResult(new DialogResult() {
 			
 			@Override
 			public boolean handle(boolean btnOk) {
 				if(!btnOk) {
-					back();
+					navStack.back();
 					return true;
 				}
 				//TODO
@@ -269,10 +338,9 @@ public class TabInnerController {
 			}
 		});
 	}
-
-	protected void back() {
-		// TODO Auto-generated method stub
-		
-	}
 	
+	protected void lockControl() {
+		btnBack.setDisable(!navStack.isBackPossible());
+		btnNext.setDisable(!navStack.isNextPossible());
+	}
 }
