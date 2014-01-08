@@ -69,4 +69,8 @@ public class Main extends Application {
 		return resStrings;
 	}
 
+	public static Logger getLogger() {
+		return log;
+	}
+
 }

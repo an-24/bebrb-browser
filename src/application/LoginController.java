@@ -4,6 +4,7 @@ import java.util.logging.Level;
 
 import utils.LocaleUtils;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
@@ -17,9 +18,13 @@ public class LoginController {
 	@FXML
 	private RadioButton rbToken;
 	@FXML
-	private TextField tvUserName;
+	private TextField tfUserName;
 	@FXML
-	private TextField tvPasswordOrPin;
+	private TextField tfPasswordOrPin;
+	@FXML
+	private Label lUserName;
+	@FXML
+	private Label lPasswordOrPin;
 	
 	@FXML
 	public void initialize() {

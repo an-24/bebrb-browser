@@ -1,6 +1,5 @@
 package application;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -11,7 +10,6 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -23,8 +21,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.text.TextAlignment;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import org.bebrb.client.Client;
@@ -264,18 +260,19 @@ public class TabInnerController {
 			
 			@Override
 			public boolean handle(boolean btnOk) {
-				// TODO Auto-generated method stub
-				return btnOk;
+				if(!btnOk) {
+					back();
+					return true;
+				}
+				//TODO
+				return true;
 			}
 		});
-/*		
-		Stage stage = new Stage();
-	    stage.setScene(new Scene(ctrl.getRoot()));
-		stage.setTitle("Login");
-		stage.initModality(Modality.WINDOW_MODAL);
-		stage.initOwner(root.getScene().getWindow());
-	    stage.show();
-*/	    		
+	}
+
+	protected void back() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
