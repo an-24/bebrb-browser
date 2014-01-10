@@ -13,6 +13,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.effect.BoxBlur;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -47,7 +48,7 @@ public class Dialog {
 		// mask pane
 		maskPane = new StackPane();
 		maskPane.setStyle("-fx-background-color:black;");
-		maskPane.setOpacity(0.2);
+		maskPane.setOpacity(0.5);
 		root.getChildren().add(maskPane);
 		AnchorPane.setLeftAnchor(maskPane, 0D);AnchorPane.setRightAnchor(maskPane, 0D);
 		AnchorPane.setTopAnchor(maskPane, 0D);AnchorPane.setBottomAnchor(maskPane, 0D);
