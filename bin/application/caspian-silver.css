@@ -568,3 +568,6 @@
 	-fx-border-color: -fx-text-box-border transparent  transparent transparent;
 }
 
+.errorinput {
+	-fx-background-color:derive(#FF0000,99%);
+}

@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 
 import javafx.scene.control.Labeled;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextInputControl;
 import application.Main;
 
 public class LocaleUtils {
@@ -23,7 +24,9 @@ public class LocaleUtils {
 							if(value instanceof Labeled) 
 								((Labeled)value).setText(rs);else
 									if(value instanceof MenuItem)
-										((MenuItem)value).setText(rs);
+										((MenuItem)value).setText(rs);else
+											if(value instanceof TextInputControl)
+												((TextInputControl)value).setPromptText(rs);
 						}
 					}
 				};

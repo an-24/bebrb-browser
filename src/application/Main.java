@@ -1,17 +1,21 @@
 package application;
 	
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import utils.DomainProperties;
 import utils.UTF8Control;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.fxml.FXMLLoader;
 
@@ -24,6 +28,7 @@ public class Main extends Application {
 	static Locale locale = Locale.getDefault();
 	static ResourceBundle resStrings;
 	static Logger log = Logger.getLogger("bebrb");
+	private static Thread primaryThread;
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -42,6 +47,7 @@ public class Main extends Application {
 	
 	public static void main(String[] args) {
 		//TODO read locale in settings
+		primaryThread = Thread.currentThread();
 		resStrings = ResourceBundle.getBundle("bundles.strings", locale,new UTF8Control());
 		launch(args);
 	}
@@ -71,6 +77,14 @@ public class Main extends Application {
 
 	public static Logger getLogger() {
 		return log;
+	}
+
+	public static Thread getFXThread() {
+		return primaryThread;
+	}
+	
+	public static DomainProperties getDomainProperties(String domain) throws FileNotFoundException, IOException {
+		return new DomainProperties(domain);
 	}
 
 }

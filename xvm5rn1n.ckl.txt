@@ -1,0 +1,63 @@
+﻿
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	renamed:    src/org/bebrb/client/controls/Validator.java -> src/org/bebrb/client/controls/validators/Validator.java
+#
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   bin/application/Dialog.fxml
+#	modified:   bin/application/DialogController.class
+#	modified:   bin/application/Login.fxml
+#	modified:   bin/application/LoginController.class
+#	modified:   bin/application/Main.class
+#	modified:   bin/application/MainController$1.class
+#	modified:   bin/application/MainController$2.class
+#	modified:   bin/application/MainController.class
+#	modified:   bin/application/TabInnerController$1.class
+#	modified:   bin/application/TabInnerController$2.class
+#	modified:   bin/application/TabInnerController$3.class
+#	modified:   bin/application/TabInnerController$4.class
+#	modified:   bin/application/TabInnerController$5.class
+#	modified:   bin/application/TabInnerController$6.class
+#	modified:   bin/application/TabInnerController$7.class
+#	modified:   bin/application/TabInnerController.class
+#	modified:   bin/application/caspian-silver.css
+#	modified:   bin/bundles/strings_en.properties
+#	modified:   bin/bundles/strings_ru.properties
+#	modified:   bin/org/bebrb/client/Dialog$1.class
+#	modified:   bin/org/bebrb/client/Dialog.class
+#	modified:   bin/org/bebrb/server/net/Command$Response.class
+#	modified:   bin/org/bebrb/server/net/Command.class
+#	modified:   bin/org/bebrb/server/net/CommandFactory$ErrorInfo.class
+#	modified:   bin/org/bebrb/server/net/CommandFactory$NumberAdapter.class
+#	modified:   bin/org/bebrb/server/net/CommandFactory.class
+#	modified:   bin/utils/LocaleUtils.class
+#	modified:   src/application/Dialog.fxml
+#	modified:   src/application/DialogController.java
+#	modified:   src/application/Login.fxml
+#	modified:   src/application/LoginController.java
+#	modified:   src/application/Main.java
+#	modified:   src/application/MainController.java
+#	modified:   src/application/TabInnerController.java
+#	modified:   src/application/caspian-silver.css
+#	modified:   src/bundles/strings_en.properties
+#	modified:   src/bundles/strings_ru.properties
+#	modified:   src/org/bebrb/client/Dialog.java
+#	modified:   src/org/bebrb/client/controls/validators/Validator.java
+#	modified:   src/utils/LocaleUtils.java
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	src/application/images/error-small.png
+#	src/org/bebrb/client/controls/Ballon.java
+#	src/org/bebrb/client/controls/validators/EmptyValidator.java
+#	src/org/bebrb/client/controls/validators/ValidateController.java
+#	src/utils/DomainProperties.java
+

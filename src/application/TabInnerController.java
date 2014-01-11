@@ -1,5 +1,7 @@
 package application;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -36,7 +38,9 @@ import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandHello;
 import org.bebrb.server.net.CommandHello.AppInfo;
+import org.bebrb.server.net.CommandLogin;
 
+import utils.DomainProperties;
 import utils.LocaleUtils;
 import application.NavigateStack.CommandPoint;
 
@@ -49,30 +53,32 @@ public class TabInnerController {
 	private Button btnBack;
 	@FXML
 	private Button btnNext;
-	
+
 	private Tab owner;
 	private Client query;
 	private ApplicationContext app;
-	
+
 	private NavigateStack navStack = new NavigateStack();
-	
+
 	private OnError errorHandler = new OnError() {
 		@Override
 		public void errorCame(Exception ex) {
-	    	setProgress(false);
-			if(ex instanceof ExecException) {
+			setProgress(false);
+			if (ex instanceof ExecException) {
 				String ms = ex.getMessage();
-				if(ms==null || ms.isEmpty()) {
+				if (ms == null || ms.isEmpty()) {
 					ms = ex.getCause().getClass().getName();
-					Main.log.log(Level.SEVERE, ex.getCause().getMessage(), ex.getCause());
+					Main.log.log(Level.SEVERE, ex.getCause().getMessage(),
+							ex.getCause());
 				}
-				printError(ms); 
+				printError(ms);
 			} else
-				printError(String.format(Main.getStrings().getString("ex-NetError"),
+				printError(String.format(
+						Main.getStrings().getString("ex-NetError"),
 						ex.getMessage()));
 		}
 	};
-	
+
 	@FXML
 	public void initialize() {
 		try {
@@ -88,86 +94,84 @@ public class TabInnerController {
 				lockControl();
 			}
 		});
-		
+
 		btnNext.setDisable(true);
 		btnNext.setOnAction(new EventHandler<ActionEvent>() {
-			
+
 			@Override
 			public void handle(ActionEvent event) {
 				navStack.next();
 				lockControl();
 			}
 		});
-		
-		
-		
-		//FIXME demo
+
+		// FIXME demo
 		comboUri.setValue("localhost:8080");
-		
-		
+
 		comboUri.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				interrupt();
-				String input = comboUri.getValue();
-				URI uri;
 				try {
-					if(!input.startsWith(Main.DSP_PROTOCOL)) 
-						input = Main.DSP_PROTOCOL+input;
-					uri = new URI(input);
-				    String domain = uri.getHost();
-				    int port = uri.getPort();
-				    query = new Client(domain,port,new OnResponse() {
-						@Override
-						public void replyСame(String message) throws Exception {
-							try {
-								// parse
-								CommandHello.Response response =  CommandFactory.createGson().fromJson(message, CommandHello.Response.class);
-								if(response.getStatus()!=Command.OK) { 
-									Main.log.log(Level.SEVERE, response.getMessage()+" detail:"+response.getTrace());
-									throw new Exception(String.format(Main.getStrings().getString("ex-OnServerError"), response.getMessage()));
-								} else
-									Main.log.log(Level.INFO, "response:"+message);
-								// handle
-								handleHello(response);
-							} finally {
-								// finish
-							    Platform.runLater(new Runnable() {
-									@Override
-									public void run() {
-								    	setProgress(false);
+					Host host = getHost();
+					query = new Client(host.domain, host.port,
+							new OnResponse() {
+								@Override
+								public void replyСame(String message)
+										throws Exception {
+									try {
+										// parse
+										CommandHello.Response response = CommandFactory
+												.createGson()
+												.fromJson(message,CommandHello.Response.class);
+										if (response.getStatus() != Command.OK) {
+											Main.log.log(Level.SEVERE,
+													response.getMessage()+ " detail:"+ response.getTrace());
+											throw new Exception(
+													String.format(Main.getStrings().getString("ex-OnServerError"),
+															response.getMessage()));
+										} else
+											Main.log.log(Level.INFO,
+													"response:" + message);
+										// handle
+										handleHello(response);
+									} finally {
+										// finish
+										Platform.runLater(new Runnable() {
+											@Override
+											public void run() {
+												setProgress(false);
+											}
+										});
 									}
-								}); 
-							}
-						}
-					}, errorHandler);
-				    setProgress(true);
-				    try {
-				    	query.send(new CommandHello());
-				    } finally {
-				    	query = null;
-				    }	
+								}
+							}, errorHandler);
+					setProgress(true);
+					try {
+						query.send(new CommandHello());
+					} finally {
+						query = null;
+					}
 				} catch (URISyntaxException e) {
 					printError(Main.getStrings().getString("ex-URISyntaxError"));
 				}
 			}
 		});
-		
+
 	}
-	
 
 	@Override
 	protected void finalize() throws Throwable {
 		interrupt();
 		super.finalize();
 	}
-	
+
 	private void interrupt() {
-		if(query!=null) {
+		if (query != null) {
 			setProgress(false);
 			query.interrupt();
 		}
-		
+
 	}
 
 	private void printError(String err) {
@@ -181,8 +185,9 @@ public class TabInnerController {
 		l.setWrapText(true);
 		box.getChildren().add(l);
 		box.setAlignment(Pos.CENTER);
-		box.setMaxSize(root.getScene().getWidth()*2D/3, Region.USE_PREF_SIZE);
-		//box.setOpacity(0.85);
+		box.setMaxSize(root.getScene().getWidth() * 2D / 3,
+				Region.USE_PREF_SIZE);
+		// box.setOpacity(0.85);
 		root.setCenter(box);
 	}
 
@@ -197,13 +202,14 @@ public class TabInnerController {
 		l.setWrapText(true);
 		box.getChildren().add(l);
 		box.setAlignment(Pos.CENTER);
-		box.setMaxSize(root.getScene().getWidth()*2D/3, Region.USE_PREF_SIZE);
-		//box.setOpacity(0.85);
+		box.setMaxSize(root.getScene().getWidth() * 2D / 3,
+				Region.USE_PREF_SIZE);
+		// box.setOpacity(0.85);
 		root.setCenter(box);
 	}
-	
+
 	private void setProgress(boolean b) {
-		if(b) {
+		if (b) {
 			ProgressIndicator indicator = new ProgressIndicator();
 			indicator.setMinSize(16, 16);
 			indicator.setPrefSize(16, 16);
@@ -221,34 +227,51 @@ public class TabInnerController {
 	}
 
 	/**
-	 *  ====================================================================================================
-	 *  ============ CommandHello
-	 *  ====================================================================================================
+	 * ========================================================================
+	 * ============================ ============ CommandHello
+	 * ====================
+	 * ======================================================
+	 * ==========================
 	 */
-	private void handleHello(final CommandHello.Response response) throws Exception {
+	private void handleLogin(final CommandLogin.Response response)
+			throws Exception {
+
+	}
+
+	/**
+	 * ========================================================================
+	 * ============================ ============ CommandHello
+	 * ====================
+	 * ======================================================
+	 * ==========================
+	 */
+	private void handleHello(final CommandHello.Response response)
+			throws Exception {
 		final DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-		final ApplicationListController ctrl = Main.loadNodeController("ApplicationList.fxml");
-		
-		final ListView<AppInfo> list = ctrl.getList(); 
-		
+		final ApplicationListController ctrl = Main
+				.loadNodeController("ApplicationList.fxml");
+
+		final ListView<AppInfo> list = ctrl.getList();
+
 		list.setCellFactory(new Callback<ListView<AppInfo>, ListCell<AppInfo>>() {
 			@Override
 			public ListCell<AppInfo> call(ListView<AppInfo> list) {
 				return new ListCell<AppInfo>() {
 					@Override
-			        public void updateItem(AppInfo item, boolean empty) {
+					public void updateItem(AppInfo item, boolean empty) {
 						super.updateItem(item, empty);
-						if(item!=null)
-							setGraphic(new Label(item.getTitle()+" ["+df.format(item.getRelease())+"]"));
+						if (item != null)
+							setGraphic(new Label(item.getTitle() + " ["
+									+ df.format(item.getRelease()) + "]"));
 					}
 				};
 			}
 		});
-		
-	    Platform.runLater(new Runnable() {
+
+		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
-				if(response.getApps()!=null) {
+				if (response.getApps() != null) {
 					for (AppInfo app : response.getApps()) {
 						list.getItems().add(app);
 					}
@@ -256,38 +279,41 @@ public class TabInnerController {
 					// show
 					cleanScreen();
 					Pane lv = ctrl.getRoot();
-					((Pane)root.getCenter()).getChildren().add(lv);
+					((Pane) root.getCenter()).getChildren().add(lv);
 					AnchorPane.setTopAnchor(lv, 40D);
 					AnchorPane.setLeftAnchor(lv, 60D);
 					AnchorPane.setRightAnchor(lv, 60D);
 					AnchorPane.setBottomAnchor(lv, 40D);
-					
+
 				} else {
-					printInfo(Main.getStrings().getString("listApplicationIsEmpty"));
+					printInfo(Main.getStrings().getString(
+							"listApplicationIsEmpty"));
 				}
-					
+
 			}
-		}); 
-	    Platform.runLater(new Runnable() {
+		});
+		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
 				list.requestFocus();
 				list.getSelectionModel().select(0);
-		}});
-	    
-	    ctrl.getButtonOk().setOnAction(new EventHandler<ActionEvent>() {
+			}
+		});
+
+		ctrl.getButtonOk().setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
-					final AppInfo selectedApp =  list.getSelectionModel().getSelectedItem();
+					final AppInfo selectedApp = list.getSelectionModel()
+							.getSelectedItem();
 					// push save point
-					CommandPoint savepoint = new CommandPoint(){
+					CommandPoint savepoint = new CommandPoint() {
 						@Override
 						public void retry() {
 							try {
 								handleHello(response);
 							} catch (Exception e) {
-								Main.log.log(Level.SEVERE, e.getMessage(),e);
+								Main.log.log(Level.SEVERE, e.getMessage(), e);
 							}
 						}
 
@@ -296,7 +322,7 @@ public class TabInnerController {
 							try {
 								login(selectedApp);
 							} catch (Exception e) {
-								Main.log.log(Level.SEVERE, e.getMessage(),e);
+								Main.log.log(Level.SEVERE, e.getMessage(), e);
 							}
 						}
 					};
@@ -305,7 +331,7 @@ public class TabInnerController {
 					savepoint.next();
 					lockControl();
 				} catch (Exception e) {
-					Main.log.log(Level.SEVERE, e.getMessage(),e);
+					Main.log.log(Level.SEVERE, e.getMessage(), e);
 				}
 			}
 
@@ -316,31 +342,128 @@ public class TabInnerController {
 		root.setCenter(new AnchorPane());
 	}
 
-
-	private void login(AppInfo app) throws Exception {
+	private void login(final AppInfo app) throws Exception {
 		final LoginController ctrl = Main.loadNodeController("Login.fxml");
+		final Dialog dlg = new Dialog((Pane) root.getCenter(), ctrl.getRoot());
+		dlg.setFirstInFocus(ctrl.getUserNameControl());
+
+		//default value
+		final DomainProperties props = Main.getDomainProperties(getHost().domain);
+		ctrl.getUserNameControl().setText(props.getProperty("user.name"));
 		
-		/*
-		AnchorPane pane = new AnchorPane();
-		root.setCenter(pane);
-		*/
-		Dialog dlg = new Dialog((Pane)root.getCenter(), ctrl.getRoot());
 		dlg.showForResult(new DialogResult() {
-			
 			@Override
 			public boolean handle(boolean btnOk) {
-				if(!btnOk) {
+				if (!btnOk) {
 					navStack.back();
 					return true;
 				}
-				//TODO
-				return true;
+				boolean r = ctrl.getValidateControl().action(ctrl.getRoot());
+				if (r) {
+					interrupt();
+					try {
+						Host host = getHost();
+						query = new Client(host.domain, host.port,
+								new OnResponse() {
+									@Override
+									public void replyСame(String message)
+											throws Exception {
+										try {
+											// parse
+											CommandLogin.Response response = CommandFactory.createGson()
+													.fromJson(message,CommandLogin.Response.class);
+											if (response.getStatus() != Command.OK) {
+												Main.log.log(Level.SEVERE,response.getMessage()+ " detail:"+ response.getTrace());
+												dlg.addActionMessage(response.getMessageForUser());
+											} else {
+												Main.log.log(Level.INFO,"response:" + message);
+												//close
+												Platform.runLater(new Runnable() {
+													@Override
+													public void run() {
+														dlg.close();
+													}
+												});
+												// handle
+												handleLogin(response);
+											};	
+										} finally {
+											// finish
+											Platform.runLater(new Runnable() {
+												@Override
+												public void run() {
+													setProgress(false);
+												}
+											});
+										}
+									}
+								}, new OnError() {
+									@Override
+									public void errorCame(Exception ex) {
+										setProgress(false);
+										if (ex instanceof ExecException) {
+											String ms = ex.getMessage();
+											if (ms == null || ms.isEmpty()) {
+												ms = ex.getCause().getClass().getName();
+												Main.log.log(Level.SEVERE, ex.getCause()
+														.getMessage(), ex.getCause());
+											}
+											dlg.addActionMessage(ms);
+										} else
+											dlg.addActionMessage(String
+													.format(Main.getStrings().getString("ex-NetError"),
+															ex.getMessage()));
+									}
+								});
+						setProgress(true);
+						try {
+							try {
+								// save default
+								props.setProperty("user.name",ctrl.getUserNameControl().getText());
+								props.save();
+							} catch (Exception e) {
+								Main.log.log(Level.SEVERE,e.getMessage(),e);
+							}
+							r = false;
+							query.send(new CommandLogin(app.getName(), ctrl
+									.getUserNameControl().getText(), ctrl
+									.getPasswordControl().getText()));
+						} finally {
+							query = null;
+						}
+					} catch (URISyntaxException e) {
+						dlg.addActionMessage(Main.getStrings().getString(
+								"ex-URISyntaxError"));
+					}
+				}
+				return r;
 			}
 		});
 	}
-	
+
+	private Host getHost() throws URISyntaxException {
+		String input = comboUri.getValue();
+		URI uri;
+		if (!input.startsWith(Main.DSP_PROTOCOL))
+			input = Main.DSP_PROTOCOL + input;
+		uri = new URI(input);
+		String domain = uri.getHost();
+		int port = uri.getPort();
+		return new Host(domain, port);
+	}
+
 	protected void lockControl() {
 		btnBack.setDisable(!navStack.isBackPossible());
 		btnNext.setDisable(!navStack.isNextPossible());
+	}
+
+	public class Host {
+		public final String domain;
+		public final int port;
+
+		public Host(String domain, int port) {
+			this.domain = domain;
+			this.port = port;
+		}
 	}
 }

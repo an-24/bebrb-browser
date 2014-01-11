@@ -12,12 +12,12 @@
       <children>
         <RadioButton fx:id="rbPassword" mnemonicParsing="false" prefHeight="39.0" selected="true" text="Present your password" wrapText="true" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="0" />
         <RadioButton fx:id="rbToken" mnemonicParsing="false" text="Your token or smart card" wrapText="true" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="0" GridPane.rowSpan="1" />
-        <TextField fx:id="tfUserName" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+        <TextField fx:id="tfUserName" promptText="enter the user name" GridPane.columnIndex="2" GridPane.rowIndex="1" GridPane.valignment="CENTER">
           <GridPane.margin>
             <Insets fx:id="x1" />
           </GridPane.margin>
         </TextField>
-        <PasswordField fx:id="tfPasswordOrPin" GridPane.columnIndex="2" GridPane.margin="$x1" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+        <PasswordField fx:id="tfPasswordOrPin" promptText="enter the password or pin in case use smart card" GridPane.columnIndex="2" GridPane.margin="$x1" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
         <Label fx:id="lUserName" text="User name" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1" GridPane.valignment="CENTER">
           <GridPane.margin>
             <Insets right="10.0" fx:id="x2" />
@@ -43,3 +43,6 @@
     </GridPane>
   </children>
 </AnchorPane>
+
+
+

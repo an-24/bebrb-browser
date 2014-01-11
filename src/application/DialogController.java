@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import utils.LocaleUtils;
 
 public class DialogController {
@@ -18,6 +19,8 @@ public class DialogController {
 	private Button btnCancel;
 	@FXML
 	private AnchorPane apContent;
+	@FXML
+	private VBox errorBox;
 	
 	
 	@FXML
@@ -43,6 +46,10 @@ public class DialogController {
 
 	public AnchorPane getContent() {
 		return apContent;
+	}
+
+	public VBox getErrorBox() {
+		return errorBox;
 	}
 
 }

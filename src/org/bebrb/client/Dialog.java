@@ -13,7 +13,12 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
-import javafx.scene.effect.BoxBlur;
+import javafx.scene.Parent;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -25,6 +30,7 @@ public class Dialog {
 	private List<Node> lockedControls=new ArrayList<Node>();
 	private DialogController ctrlDialog;
 	private DialogResult handlerOk;
+	private Node firstInFocus = null;
 
 	public Dialog(Pane root, Node source) {
 		this.root = root;
@@ -42,6 +48,46 @@ public class Dialog {
 		root.getChildren().remove(maskPane);
 		for (Node n : lockedControls) n.setDisable(false);
 		lockedControls.clear();
+	}
+	
+	public Node getFirstInFocus() {
+		return firstInFocus;
+	}
+
+	public void setFirstInFocus(Node firstInFocus) {
+		this.firstInFocus = firstInFocus;
+	}
+	
+	public void addActionMessage(String message) {
+		final Label l = new Label(message);
+		final Image image = new Image(ClassLoader.getSystemResourceAsStream("application/images/error-small.png"));
+		if(Main.getFXThread()!=Thread.currentThread()) {
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					l.setGraphic(new ImageView(image));
+					ctrlDialog.getErrorBox().getChildren().add(l);
+				}
+			});
+			
+		} else {
+			l.setGraphic(new ImageView(image));
+			ctrlDialog.getErrorBox().getChildren().add(l);
+		}	
+	}
+
+	public void clearActionMessages() {
+		if(Main.getFXThread()!=Thread.currentThread()) {
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					ctrlDialog.getErrorBox().getChildren().clear();
+				}
+			});
+			
+		} else {
+			ctrlDialog.getErrorBox().getChildren().clear();
+		}	
 	}
 	
 	private Pane beforeShow() throws IOException {
@@ -75,7 +121,15 @@ public class Dialog {
 		ctrlDialog.getBtnOk().setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if(handlerOk.handle(true)) close();
+				clearActionMessages();
+				setDisableControls(true);
+				setProgress(true);
+				try {
+					if(handlerOk.handle(true)) close();
+				} finally {
+					setDisableControls(false);
+					setProgress(false);
+				}
 			}
 		});
 
@@ -98,14 +152,67 @@ public class Dialog {
 				
 				AnchorPane.setLeftAnchor(source, 0D);
 				AnchorPane.setRightAnchor(source, 0D);
+
+				Node focusnode;
+				if(firstInFocus==null) {
+					focusnode = findFirstFocusNode((Parent) source);
+					if(focusnode==null) focusnode = ctrlDialog.getBtnOk();
+				} else
+					focusnode = firstInFocus; 
+				focusnode.requestFocus();
 			}
 		});
 		
 		return ctrlDialog.getContent();
 	}
 
+	private void setDisableControls(boolean b) {
+		ctrlDialog.getBtnOk().setDisable(b);
+		ctrlDialog.getBtnCancel().setDisable(b);
+	}
+
+	private Node findFirstFocusNode(Parent node) {
+		ObservableList<Node> list = node.getChildrenUnmodifiable();
+		for (int i = 0, len = list.size(); i < len; i++) {
+			Node n = list.get(i);
+			if(!n.isDisable() && n.isFocusTraversable())
+				return n;
+			if(n instanceof Parent) {
+				n = findFirstFocusNode((Parent) n);
+				if(n!=null) return n;
+			}
+		}
+		return null;
+		
+	}
+
+	private void setProgress(final boolean b) {
+		if(Main.getFXThread()!=Thread.currentThread()) {
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					setProgressInner(b);
+				}
+			});
+			
+		} else {
+			setProgressInner(b);
+		}	
+	}
+	
+	private void setProgressInner(boolean b) {
+		if (b) {
+			ProgressIndicator indicator = new ProgressIndicator();
+			indicator.setMinSize(16, 16);
+			indicator.setPrefSize(16, 16);
+			ctrlDialog.getBtnOk().setGraphic(indicator);
+		} else
+			ctrlDialog.getBtnOk().setGraphic(null);
+	}
+	
 	public interface DialogResult{
 		public boolean handle(boolean btnOk);
 	}
+	
 
 }
