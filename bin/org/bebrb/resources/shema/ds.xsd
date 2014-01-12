@@ -98,6 +98,7 @@
    		<attribute name="key" type="QName"/>
    		<attribute name="lazy" type="boolean" default="true"/>
  	    <attribute name="cache-control" type="tns:cacheControlType" default="None"/>
+   		<attribute name="public" type="boolean" default="true"/>
  	  	<!-- for cache-control = IsModified -->
 	  	<attribute name="actualDate" type="date"/>
     </complexType>

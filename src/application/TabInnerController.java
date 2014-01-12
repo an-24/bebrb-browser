@@ -19,6 +19,8 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tab;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -43,6 +45,7 @@ import org.bebrb.server.net.CommandLogin;
 import utils.DomainProperties;
 import utils.LocaleUtils;
 import application.NavigateStack.CommandPoint;
+import application.NavigateStack.CommandPointEx;
 
 public class TabInnerController {
 	@FXML
@@ -56,14 +59,15 @@ public class TabInnerController {
 
 	private Tab owner;
 	private Client query;
-	private ApplicationContext app;
+	private AppInfo selectedApplication;
+	private ApplicationWorkspaceController appWorkspace;
 
 	private NavigateStack navStack = new NavigateStack();
 
 	private OnError errorHandler = new OnError() {
 		@Override
 		public void errorCame(Exception ex) {
-			setProgress(false);
+			ready();
 			if (ex instanceof ExecException) {
 				String ms = ex.getMessage();
 				if (ms == null || ms.isEmpty()) {
@@ -86,6 +90,8 @@ public class TabInnerController {
 		} catch (Exception e) {
 			Main.log.log(Level.SEVERE, e.getMessage(), e);
 		}
+		
+		btnBack.setGraphic(new ImageView(new Image(ClassLoader.getSystemResourceAsStream("application/images/back.png"))));
 		btnBack.setDisable(true);
 		btnBack.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -95,6 +101,7 @@ public class TabInnerController {
 			}
 		});
 
+		btnNext.setGraphic(new ImageView(new Image(ClassLoader.getSystemResourceAsStream("application/images/next.png"))));
 		btnNext.setDisable(true);
 		btnNext.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -140,13 +147,13 @@ public class TabInnerController {
 										Platform.runLater(new Runnable() {
 											@Override
 											public void run() {
-												setProgress(false);
+												ready();
 											}
 										});
 									}
 								}
 							}, errorHandler);
-					setProgress(true);
+					waiting();
 					try {
 						query.send(new CommandHello());
 					} finally {
@@ -168,7 +175,7 @@ public class TabInnerController {
 
 	private void interrupt() {
 		if (query != null) {
-			setProgress(false);
+			ready();
 			query.interrupt();
 		}
 
@@ -228,14 +235,59 @@ public class TabInnerController {
 
 	/**
 	 * ========================================================================
-	 * ============================ ============ CommandHello
+	 * ============================ ============ CommandLogin
 	 * ====================
 	 * ======================================================
 	 * ==========================
 	 */
 	private void handleLogin(final CommandLogin.Response response)
 			throws Exception {
+		final ApplicationWorkspaceController ctrl = Main.loadNodeController("ApplicationWorkspace.fxml");
+		ctrl.setTabController(this);
+		ctrl.setup(response);
+		appWorkspace = ctrl;
+		
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				cleanScreen();
+				root.setCenter(ctrl.getRoot());
+			}
+		});
+		// push save point
+		CommandPointEx savepoint = new CommandPointEx() {
+			@Override
+			public void back() {
+				try {
+					cleanScreen();
+					login(selectedApplication);
+				} catch (Exception e) {
+					Main.log.log(Level.SEVERE, e.getMessage(), e);
+				}
+			}
 
+			@Override
+			public void next() {
+				try {
+					handleLogin(response);
+				} catch (Exception e) {
+					Main.log.log(Level.SEVERE, e.getMessage(), e);
+				}
+			}
+
+			@Override
+			public void afterBack() {
+				//cut stack
+				navStack.cut(navStack.getTop());
+				lockControl();
+			}
+
+			@Override
+			public void afterNext() {
+			}
+		};
+		navStack.push(savepoint);
+		lockControl();
 	}
 
 	/**
@@ -309,7 +361,7 @@ public class TabInnerController {
 					// push save point
 					CommandPoint savepoint = new CommandPoint() {
 						@Override
-						public void retry() {
+						public void back() {
 							try {
 								handleHello(response);
 							} catch (Exception e) {
@@ -345,6 +397,8 @@ public class TabInnerController {
 	private void login(final AppInfo app) throws Exception {
 		final LoginController ctrl = Main.loadNodeController("Login.fxml");
 		final Dialog dlg = new Dialog((Pane) root.getCenter(), ctrl.getRoot());
+		
+		this.selectedApplication = app;
 		dlg.setFirstInFocus(ctrl.getUserNameControl());
 
 		//default value
@@ -392,7 +446,8 @@ public class TabInnerController {
 											Platform.runLater(new Runnable() {
 												@Override
 												public void run() {
-													setProgress(false);
+													ready();
+													dlg.ready();
 												}
 											});
 										}
@@ -400,22 +455,22 @@ public class TabInnerController {
 								}, new OnError() {
 									@Override
 									public void errorCame(Exception ex) {
-										setProgress(false);
+										Main.log.log(Level.SEVERE, ex.getCause().getMessage(), ex.getCause());
+										ready();
+										dlg.ready();
 										if (ex instanceof ExecException) {
 											String ms = ex.getMessage();
 											if (ms == null || ms.isEmpty()) {
 												ms = ex.getCause().getClass().getName();
-												Main.log.log(Level.SEVERE, ex.getCause()
-														.getMessage(), ex.getCause());
 											}
 											dlg.addActionMessage(ms);
-										} else
+										} else {
 											dlg.addActionMessage(String
 													.format(Main.getStrings().getString("ex-NetError"),
 															ex.getMessage()));
+										}	
 									}
 								});
-						setProgress(true);
 						try {
 							try {
 								// save default
@@ -435,10 +490,32 @@ public class TabInnerController {
 						dlg.addActionMessage(Main.getStrings().getString(
 								"ex-URISyntaxError"));
 					}
+				} else {
+					ready();
+					dlg.ready();
 				}
 				return r;
 			}
+
+			@Override
+			public boolean before() {
+				TabInnerController.this.waiting();
+				dlg.waiting();
+				return true;
+			}
+
+			@Override
+			public void after() {
+			}
 		});
+	}
+
+	protected void waiting() {
+		setProgress(true);
+	}
+	
+	protected void ready() {
+		setProgress(false);
 	}
 
 	private Host getHost() throws URISyntaxException {

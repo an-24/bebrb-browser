@@ -13,8 +13,8 @@
       <top>
         <ToolBar>
           <items>
-            <Button fx:id="btnBack" text="&lt;-" />
-            <Button fx:id="btnNext" text="-&gt;" />
+            <Button fx:id="btnBack"/>
+            <Button fx:id="btnNext"/>
             <ComboBox id="cmbBox" fx:id="comboUri" editable="true" prefWidth="349.0" promptText="введите адрес приложения" style="-fx-right:0px;" />
             <MenuButton alignment="CENTER" contentDisplay="BOTTOM" mnemonicParsing="false" text="..." />
           </items>
