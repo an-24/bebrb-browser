@@ -25,23 +25,19 @@ public class DomainProperties extends Properties {
 	}
 
 	public void open() throws FileNotFoundException, IOException {
-		String path = openOrCreatePath();
-		load(new FileInputStream(path+fileName));
+		File f = openOrCreatePath();
+		load(new FileInputStream(f));
 	}
 	
 	public void save() throws FileNotFoundException, IOException {
-		String path = openOrCreatePath();
-		store(new FileOutputStream(path+fileName),null);
+		File f = openOrCreatePath();
+		store(new FileOutputStream(f),null);
 	}
 
-	private String openOrCreatePath() throws IOException {
-		String path = System.getProperty("user.home")+File.separator+".bebrb"+
-				File.separator+domain+File.separator;
-		File f = new File(path);
-		if(!f.exists())	f.mkdirs();
-		f = new File(path+fileName);
+	private File openOrCreatePath() throws IOException {
+		File f = LocalStore.openStore(domain);
+		f = new File(f,fileName);
 		if(!f.exists())	f.createNewFile();
-		
-		return path;
+		return f;
 	}
 }

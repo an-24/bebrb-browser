@@ -1,15 +1,28 @@
 package application;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -23,6 +36,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 
@@ -33,13 +47,19 @@ import org.bebrb.client.Client.OnResponse;
 import org.bebrb.client.Dialog;
 import org.bebrb.client.Dialog.DialogResult;
 import org.bebrb.client.controls.SuggestBox;
+import org.bebrb.client.controls.SuggestBox.CellFactory;
+import org.bebrb.client.controls.SuggestBox.FilterItems;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandHello;
 import org.bebrb.server.net.CommandHello.AppInfo;
 import org.bebrb.server.net.CommandLogin;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+
 import utils.DomainProperties;
+import utils.LocalStore;
 import utils.LocaleUtils;
 import application.NavigateStack.CommandPoint;
 import application.NavigateStack.CommandPointEx;
@@ -111,13 +131,77 @@ public class TabInnerController {
 
 		// FIXME demo
 		comboUri.setText("localhost:8080");
+		
+		comboUri.setItems(loadDomainHistory());
+		
+		comboUri.setOnFilterItem(new FilterItems<TabInnerController.DomainInfo>() {
 
+			@Override
+			public List<DomainInfo> filter(List<DomainInfo> source,
+					String inputtext) {
+				Collections.sort(source,new Comparator<DomainInfo>() {
+					@Override
+					public int compare(DomainInfo o1, DomainInfo o2) {
+						if(o1.saveDate==null && o2.saveDate!=null)
+							return 1; else
+						if(o1.saveDate!=null && o2.saveDate==null)
+							return -1; else
+						if(o1.saveDate==null && o2.saveDate==null)
+							return 0;
+						return o1.saveDate.before(o2.saveDate)?1:
+							   o1.saveDate.after(o2.saveDate)?-1:0;
+					}
+				});
+				List<DomainInfo> list = new ArrayList<TabInnerController.DomainInfo>();
+				inputtext = inputtext.toLowerCase();
+				for (DomainInfo di : source) {
+					if(di.host.domain.toLowerCase().contains(inputtext) ||
+							di.appPath.toLowerCase().contains(inputtext) ||
+							di.title.toLowerCase().contains(inputtext)) {
+						list.add(di);
+						if(list.size()>5)
+							return list;
+					}
+				}
+				if(list.size()==0) return null;
+				return list;
+			}
+		});
+		
+		comboUri.setCellFactory(new CellFactory<TabInnerController.DomainInfo>() {
+			@Override
+			public Node create(DomainInfo item) {
+				HBox hb = new HBox();
+				hb.setPadding(new Insets(5));
+				VBox vb = new VBox();
+				vb.setSpacing(5);
+				vb.getChildren().add(new Label(item.toString()));
+				vb.getChildren().add(new Label(item.title.isEmpty()?"Меню":item.title));
+				ImageView iv = new ImageView();
+//				iv.setImage(new Image());
+				hb.getChildren().add(iv);
+				hb.getChildren().add(vb);
+				return hb;
+			}
+		});
+		
 		comboUri.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				interrupt();
 				try {
 					Host host = getHost();
+					// new domain
+					if(comboUri.getValue()==null) {
+						DomainInfo di = new DomainInfo();
+						di.host =  host;
+						di.saveDate = new Date();
+						if(!findDomain(di)) {
+							comboUri.getItems().add(di);
+							comboUri.setValue(di);
+							saveDomainHistory();
+						}
+					}
 					query = new Client(host.domain, host.port,
 							new OnResponse() {
 								@Override
@@ -162,6 +246,51 @@ public class TabInnerController {
 			}
 		});
 
+	}
+	
+	protected boolean findDomain(DomainInfo target) {
+		List<DomainInfo> items = comboUri.getItems();
+		for (DomainInfo dinf : items) {
+			if(dinf.equals(target))
+				return true;
+		}
+		return false;
+	}
+
+	private void saveDomainHistory() {
+		try {
+			File f = LocalStore.openStore();
+			f = new File(f,"domain.history");
+			if(!f.exists()) f.createNewFile();
+			Gson gson = CommandFactory.createGson();
+			String text = gson.toJson(comboUri.getItems());
+			LocalStore.writeTextFile(f,text);
+		} catch (IOException e) {
+			Main.log.log(Level.SEVERE, e.getCause().getMessage(),
+					e.getCause());
+		}
+		
+	} 
+
+	private List<DomainInfo> loadDomainHistory() {
+		List<DomainInfo> list = new ArrayList<TabInnerController.DomainInfo>();
+		try {
+			File f = LocalStore.openStore();
+			f = new File(f,"domain.history");
+			if(!f.exists()) f.createNewFile();
+			String text = LocalStore.readTextFile(f);
+			Gson gson = CommandFactory.createGson();
+			JsonArray array = gson.fromJson(text, JsonArray.class);
+			if(array!=null)
+				for (int i = 0; i < array.size(); i++) {
+					DomainInfo dm = gson.fromJson(array.get(i), DomainInfo.class);
+					list.add(dm); 
+				}
+		} catch (IOException e) {
+			Main.log.log(Level.SEVERE, e.getCause().getMessage(),
+					e.getCause());
+		}
+		return list;
 	}
 
 	@Override
@@ -551,12 +680,21 @@ public class TabInnerController {
 	
 	public class DomainInfo {
 		private Host host;
-		private String title;
+		private String title ="";
 		private String appPath ="";
 		private boolean favorite;
+		private Date saveDate;
 		
 		public String toString() {
-			return host.domain+":"+host.port+appPath;
+			return host.domain+(host.port>0?":"+host.port:"")+appPath;
+		}
+		
+		public boolean equals(DomainInfo obj) {
+			return host.domain.equals(obj.host.domain) && 
+				   host.port==obj.host.port &&
+				   host.security==obj.host.security &&
+				   appPath.equals(obj.appPath);
+			
 		}
 	}
 }

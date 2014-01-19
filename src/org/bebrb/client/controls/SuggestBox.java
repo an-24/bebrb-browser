@@ -54,6 +54,7 @@ public class SuggestBox<T> extends TextField {
 		getContent().addListener(new ChangeListener<String>() {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				if(!oldValue.equals(newValue)) selectedItem = null;
 				if(!newValue.isEmpty() && oldValue.isEmpty()) setVisibleCleanButton(true);
 				if(newValue.isEmpty() && !oldValue.isEmpty()) setVisibleCleanButton(false);
 				if(!newValue.isEmpty())	startSuggestTimeout(newValue);
@@ -378,5 +379,13 @@ public class SuggestBox<T> extends TextField {
 
 	public T getValue() {
 		return selectedItem;
+	}
+
+	public CellFactory<T> getCellFactory() {
+		return cellFactory;
+	}
+
+	public void setCellFactory(CellFactory<T> cellFactory) {
+		this.cellFactory = cellFactory;
 	}
 }
