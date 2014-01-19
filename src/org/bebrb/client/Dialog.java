@@ -5,23 +5,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import utils.LocaleUtils;
-import application.DialogController;
-import application.Main;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import utils.LocaleUtils;
+import application.DialogController;
+import application.Main;
 
 public class Dialog {
 	private Pane root;
@@ -90,6 +92,16 @@ public class Dialog {
 		}	
 	}
 	
+	public void waiting() {
+		ctrlDialog.getRoot().setDisable(true);
+		setProgress(true);
+	}
+
+	public void ready() {
+		ctrlDialog.getRoot().setDisable(false);
+		setProgress(false);
+	}
+	
 	private Pane beforeShow() throws IOException {
 		// mask pane
 		maskPane = new StackPane();
@@ -116,19 +128,24 @@ public class Dialog {
 			Main.getLogger().log(Level.SEVERE, e.getMessage(), e);
 		}
 		final Pane dlg = ctrlDialog.getRoot();
+		if(source instanceof Region) {
+			double min = ((Region)source).getMinWidth();
+			if(min>=0) dlg.setMinWidth(min+20D); 
+			double max = ((Region)source).getMaxWidth();
+			if(max>=0) dlg.setMaxWidth(max+20D); 
+		}
+		
 		root.getChildren().add(dlg);
 		
 		ctrlDialog.getBtnOk().setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				if(!handlerOk.before()) return;
 				clearActionMessages();
-				setDisableControls(true);
-				setProgress(true);
 				try {
 					if(handlerOk.handle(true)) close();
 				} finally {
-					setDisableControls(false);
-					setProgress(false);
+					handlerOk.after();
 				}
 			}
 		});
@@ -166,11 +183,6 @@ public class Dialog {
 		return ctrlDialog.getContent();
 	}
 
-	private void setDisableControls(boolean b) {
-		ctrlDialog.getBtnOk().setDisable(b);
-		ctrlDialog.getBtnCancel().setDisable(b);
-	}
-
 	private Node findFirstFocusNode(Parent node) {
 		ObservableList<Node> list = node.getChildrenUnmodifiable();
 		for (int i = 0, len = list.size(); i < len; i++) {
@@ -205,13 +217,16 @@ public class Dialog {
 			ProgressIndicator indicator = new ProgressIndicator();
 			indicator.setMinSize(16, 16);
 			indicator.setPrefSize(16, 16);
+			indicator.setBlendMode(BlendMode.RED);
 			ctrlDialog.getBtnOk().setGraphic(indicator);
 		} else
 			ctrlDialog.getBtnOk().setGraphic(null);
 	}
 	
 	public interface DialogResult{
+		public boolean before();
 		public boolean handle(boolean btnOk);
+		public void after();
 	}
 	
 

@@ -1,7 +1,5 @@
 package application;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -13,12 +11,13 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tab;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -33,7 +32,7 @@ import org.bebrb.client.Client.OnError;
 import org.bebrb.client.Client.OnResponse;
 import org.bebrb.client.Dialog;
 import org.bebrb.client.Dialog.DialogResult;
-import org.bebrb.context.ApplicationContext;
+import org.bebrb.client.controls.SuggestBox;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandHello;
@@ -43,12 +42,13 @@ import org.bebrb.server.net.CommandLogin;
 import utils.DomainProperties;
 import utils.LocaleUtils;
 import application.NavigateStack.CommandPoint;
+import application.NavigateStack.CommandPointEx;
 
 public class TabInnerController {
 	@FXML
 	private BorderPane root;
 	@FXML
-	private ComboBox<String> comboUri;
+	private SuggestBox<DomainInfo> comboUri;
 	@FXML
 	private Button btnBack;
 	@FXML
@@ -56,14 +56,15 @@ public class TabInnerController {
 
 	private Tab owner;
 	private Client query;
-	private ApplicationContext app;
+	private AppInfo selectedApplication;
+	private ApplicationWorkspaceController appWorkspace;
 
 	private NavigateStack navStack = new NavigateStack();
 
 	private OnError errorHandler = new OnError() {
 		@Override
 		public void errorCame(Exception ex) {
-			setProgress(false);
+			ready();
 			if (ex instanceof ExecException) {
 				String ms = ex.getMessage();
 				if (ms == null || ms.isEmpty()) {
@@ -86,6 +87,8 @@ public class TabInnerController {
 		} catch (Exception e) {
 			Main.log.log(Level.SEVERE, e.getMessage(), e);
 		}
+		
+		btnBack.setGraphic(new ImageView(new Image(ClassLoader.getSystemResourceAsStream("application/images/back.png"))));
 		btnBack.setDisable(true);
 		btnBack.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -95,6 +98,7 @@ public class TabInnerController {
 			}
 		});
 
+		btnNext.setGraphic(new ImageView(new Image(ClassLoader.getSystemResourceAsStream("application/images/next.png"))));
 		btnNext.setDisable(true);
 		btnNext.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -106,7 +110,7 @@ public class TabInnerController {
 		});
 
 		// FIXME demo
-		comboUri.setValue("localhost:8080");
+		comboUri.setText("localhost:8080");
 
 		comboUri.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -140,13 +144,13 @@ public class TabInnerController {
 										Platform.runLater(new Runnable() {
 											@Override
 											public void run() {
-												setProgress(false);
+												ready();
 											}
 										});
 									}
 								}
 							}, errorHandler);
-					setProgress(true);
+					waiting();
 					try {
 						query.send(new CommandHello());
 					} finally {
@@ -168,7 +172,7 @@ public class TabInnerController {
 
 	private void interrupt() {
 		if (query != null) {
-			setProgress(false);
+			ready();
 			query.interrupt();
 		}
 
@@ -228,14 +232,59 @@ public class TabInnerController {
 
 	/**
 	 * ========================================================================
-	 * ============================ ============ CommandHello
+	 * ============================ ============ CommandLogin
 	 * ====================
 	 * ======================================================
 	 * ==========================
 	 */
 	private void handleLogin(final CommandLogin.Response response)
 			throws Exception {
+		final ApplicationWorkspaceController ctrl = Main.loadNodeController("ApplicationWorkspace.fxml");
+		ctrl.setTabController(this);
+		ctrl.setup(response);
+		appWorkspace = ctrl;
+		
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				cleanScreen();
+				root.setCenter(ctrl.getRoot());
+			}
+		});
+		// push save point
+		CommandPointEx savepoint = new CommandPointEx() {
+			@Override
+			public void back() {
+				try {
+					cleanScreen();
+					login(selectedApplication);
+				} catch (Exception e) {
+					Main.log.log(Level.SEVERE, e.getMessage(), e);
+				}
+			}
 
+			@Override
+			public void next() {
+				try {
+					handleLogin(response);
+				} catch (Exception e) {
+					Main.log.log(Level.SEVERE, e.getMessage(), e);
+				}
+			}
+
+			@Override
+			public void afterBack() {
+				//cut stack
+				navStack.cut(navStack.getTop());
+				lockControl();
+			}
+
+			@Override
+			public void afterNext() {
+			}
+		};
+		navStack.push(savepoint);
+		lockControl();
 	}
 
 	/**
@@ -309,7 +358,7 @@ public class TabInnerController {
 					// push save point
 					CommandPoint savepoint = new CommandPoint() {
 						@Override
-						public void retry() {
+						public void back() {
 							try {
 								handleHello(response);
 							} catch (Exception e) {
@@ -345,6 +394,8 @@ public class TabInnerController {
 	private void login(final AppInfo app) throws Exception {
 		final LoginController ctrl = Main.loadNodeController("Login.fxml");
 		final Dialog dlg = new Dialog((Pane) root.getCenter(), ctrl.getRoot());
+		
+		this.selectedApplication = app;
 		dlg.setFirstInFocus(ctrl.getUserNameControl());
 
 		//default value
@@ -392,7 +443,8 @@ public class TabInnerController {
 											Platform.runLater(new Runnable() {
 												@Override
 												public void run() {
-													setProgress(false);
+													ready();
+													dlg.ready();
 												}
 											});
 										}
@@ -400,22 +452,22 @@ public class TabInnerController {
 								}, new OnError() {
 									@Override
 									public void errorCame(Exception ex) {
-										setProgress(false);
+										Main.log.log(Level.SEVERE, ex.getCause().getMessage(), ex.getCause());
+										ready();
+										dlg.ready();
 										if (ex instanceof ExecException) {
 											String ms = ex.getMessage();
 											if (ms == null || ms.isEmpty()) {
 												ms = ex.getCause().getClass().getName();
-												Main.log.log(Level.SEVERE, ex.getCause()
-														.getMessage(), ex.getCause());
 											}
 											dlg.addActionMessage(ms);
-										} else
+										} else {
 											dlg.addActionMessage(String
 													.format(Main.getStrings().getString("ex-NetError"),
 															ex.getMessage()));
+										}	
 									}
 								});
-						setProgress(true);
 						try {
 							try {
 								// save default
@@ -435,21 +487,49 @@ public class TabInnerController {
 						dlg.addActionMessage(Main.getStrings().getString(
 								"ex-URISyntaxError"));
 					}
+				} else {
+					ready();
+					dlg.ready();
 				}
 				return r;
+			}
+
+			@Override
+			public boolean before() {
+				TabInnerController.this.waiting();
+				dlg.waiting();
+				return true;
+			}
+
+			@Override
+			public void after() {
 			}
 		});
 	}
 
+	protected void waiting() {
+		setProgress(true);
+	}
+	
+	protected void ready() {
+		setProgress(false);
+	}
+
 	private Host getHost() throws URISyntaxException {
-		String input = comboUri.getValue();
-		URI uri;
-		if (!input.startsWith(Main.DSP_PROTOCOL))
-			input = Main.DSP_PROTOCOL + input;
-		uri = new URI(input);
-		String domain = uri.getHost();
-		int port = uri.getPort();
-		return new Host(domain, port);
+		DomainInfo input = comboUri.getValue();
+		if(input==null) {
+			String s = comboUri.getText();
+			if (!s.startsWith(Main.DSP_PROTOCOL) || !s.startsWith(Main.DSP_PROTOCOL_SECURY))
+				s = Main.DSP_PROTOCOL_SECURY + s;
+			URI uri = new URI(s);
+			String domain = uri.getHost();
+			int port = uri.getPort();
+			boolean security = false; 
+			if(s.startsWith(Main.DSP_PROTOCOL_SECURY))
+				security = true;
+			return new Host(domain, port,security);
+		} else
+			return input.host;
 	}
 
 	protected void lockControl() {
@@ -458,12 +538,25 @@ public class TabInnerController {
 	}
 
 	public class Host {
+		public final boolean security;
 		public final String domain;
 		public final int port;
 
-		public Host(String domain, int port) {
+		public Host(String domain, int port, boolean security) {
 			this.domain = domain;
 			this.port = port;
+			this.security = security;
+		}
+	}
+	
+	public class DomainInfo {
+		private Host host;
+		private String title;
+		private String appPath ="";
+		private boolean favorite;
+		
+		public String toString() {
+			return host.domain+":"+host.port+appPath;
 		}
 	}
 }

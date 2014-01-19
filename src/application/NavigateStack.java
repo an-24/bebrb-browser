@@ -1,22 +1,19 @@
 package application;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 public class NavigateStack {
 
-	private LinkedList<CommandPoint> CommandStack = new LinkedList<>();
+	private ArrayList<CommandPoint> CommandStack = new ArrayList<>();
 	private CommandPoint topCommand = null;
 
 	public void push(CommandPoint point) {
 		if(topCommand==null) {
-			CommandStack.push(point);
+			CommandStack.add(point);
 		} else {
-			int idx = CommandStack.indexOf(topCommand);
 			// cut stack
-			while(idx<CommandStack.size()-1) {
-				CommandStack.remove(idx+1);
-			}
-			CommandStack.push(point);
+			cut(topCommand);
+			CommandStack.add(point);
 		}
 		topCommand = point;
 	}
@@ -25,28 +22,45 @@ public class NavigateStack {
 		return topCommand;
 	}
 
+	public int cut(CommandPoint point) {
+		int r = 0;
+		int idx = CommandStack.indexOf(point);
+		while(idx<CommandStack.size()-1) {
+			CommandStack.remove(idx+1);
+			r++;
+		}
+		topCommand = point;
+		return r;
+	}
+	
 	public void back() {
 		if(isBackPossible()) {
-			topCommand.retry();
+			CommandPoint cmd = topCommand; 
+			cmd.back();
 			int idx = CommandStack.indexOf(topCommand);
 			if(idx==0) topCommand = null; 
-				 else topCommand = CommandStack.get(idx-1); 
+				 else topCommand = CommandStack.get(idx-1);
+			if(cmd instanceof CommandPointEx)
+				((CommandPointEx)cmd).afterBack();
 		}
 	}
 
 	public void next() {
 		if(isNextPossible()) {
-			if(topCommand==null) topCommand = CommandStack.getFirst(); 
-			topCommand.next();
+			if(topCommand==null) topCommand = CommandStack.get(0); 
+			CommandPoint cmd = topCommand; 
+			cmd.next();
 			int idx = CommandStack.indexOf(topCommand);
 			if(idx<CommandStack.size()-1)
 				topCommand = CommandStack.get(idx+1); 
+			if(cmd instanceof CommandPointEx)
+				((CommandPointEx)cmd).afterNext();
 		}
 	}
 	
 	public boolean isNextPossible() {
 		return (CommandStack.size()>0) && (topCommand==null ||
-				CommandStack.getLast()!=topCommand);
+				CommandStack.get(CommandStack.size()-1)!=topCommand);
 	}
 
 	public boolean isBackPossible() {
@@ -55,7 +69,11 @@ public class NavigateStack {
 
 	
 	public interface CommandPoint {
-		public void retry();
+		public void back();
 		public void next();
+	}
+	public interface CommandPointEx extends CommandPoint {
+		public void afterBack();
+		public void afterNext();
 	}
 }

@@ -163,4 +163,9 @@ public class DataSourceImpl implements DataSource {
 
 	}
 
+	@Override
+	public boolean isPublished() {
+		return true; //always public
+	}
+
 }

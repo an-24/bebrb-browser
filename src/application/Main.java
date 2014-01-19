@@ -22,6 +22,7 @@ import javafx.fxml.FXMLLoader;
 
 public class Main extends Application {
 	public static final String DSP_PROTOCOL = "dsp://";
+	public static final String DSP_PROTOCOL_SECURY = "dsps://";
 	public static String wallPaperName = "images/default.jpg"; //TODO config
 	
 	
