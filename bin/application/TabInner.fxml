@@ -6,6 +6,7 @@
 <?import java.lang.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.bebrb.client.controls.*?>
 
 <AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.TabInnerController">
   <children>
@@ -15,7 +16,7 @@
           <items>
             <Button fx:id="btnBack"/>
             <Button fx:id="btnNext"/>
-            <ComboBox id="cmbBox" fx:id="comboUri" editable="true" prefWidth="349.0" promptText="введите адрес приложения" style="-fx-right:0px;" />
+            <SuggestBox id="cmbBox" fx:id="comboUri" editable="true" prefWidth="349.0" promptText="введите адрес приложения" style="-fx-right:0px;" />
             <MenuButton alignment="CENTER" contentDisplay="BOTTOM" mnemonicParsing="false" text="..." />
           </items>
         </ToolBar>

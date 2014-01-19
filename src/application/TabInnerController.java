@@ -1,7 +1,5 @@
 package application;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
@@ -13,7 +11,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -35,7 +32,7 @@ import org.bebrb.client.Client.OnError;
 import org.bebrb.client.Client.OnResponse;
 import org.bebrb.client.Dialog;
 import org.bebrb.client.Dialog.DialogResult;
-import org.bebrb.context.ApplicationContext;
+import org.bebrb.client.controls.SuggestBox;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandHello;
@@ -51,7 +48,7 @@ public class TabInnerController {
 	@FXML
 	private BorderPane root;
 	@FXML
-	private ComboBox<String> comboUri;
+	private SuggestBox<DomainInfo> comboUri;
 	@FXML
 	private Button btnBack;
 	@FXML
@@ -113,7 +110,7 @@ public class TabInnerController {
 		});
 
 		// FIXME demo
-		comboUri.setValue("localhost:8080");
+		comboUri.setText("localhost:8080");
 
 		comboUri.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -519,14 +516,20 @@ public class TabInnerController {
 	}
 
 	private Host getHost() throws URISyntaxException {
-		String input = comboUri.getValue();
-		URI uri;
-		if (!input.startsWith(Main.DSP_PROTOCOL))
-			input = Main.DSP_PROTOCOL + input;
-		uri = new URI(input);
-		String domain = uri.getHost();
-		int port = uri.getPort();
-		return new Host(domain, port);
+		DomainInfo input = comboUri.getValue();
+		if(input==null) {
+			String s = comboUri.getText();
+			if (!s.startsWith(Main.DSP_PROTOCOL) || !s.startsWith(Main.DSP_PROTOCOL_SECURY))
+				s = Main.DSP_PROTOCOL_SECURY + s;
+			URI uri = new URI(s);
+			String domain = uri.getHost();
+			int port = uri.getPort();
+			boolean security = false; 
+			if(s.startsWith(Main.DSP_PROTOCOL_SECURY))
+				security = true;
+			return new Host(domain, port,security);
+		} else
+			return input.host;
 	}
 
 	protected void lockControl() {
@@ -535,12 +538,25 @@ public class TabInnerController {
 	}
 
 	public class Host {
+		public final boolean security;
 		public final String domain;
 		public final int port;
 
-		public Host(String domain, int port) {
+		public Host(String domain, int port, boolean security) {
 			this.domain = domain;
 			this.port = port;
+			this.security = security;
+		}
+	}
+	
+	public class DomainInfo {
+		private Host host;
+		private String title;
+		private String appPath ="";
+		private boolean favorite;
+		
+		public String toString() {
+			return host.domain+":"+host.port+appPath;
 		}
 	}
 }
