@@ -9,14 +9,13 @@ import java.util.Set;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.control.SingleSelectionModel;
-import utils.Files;
+import utils.LocalStore;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -143,7 +142,7 @@ public class ComboBox<T> extends javafx.scene.control.ComboBox<T> {
     	// save
     	if(getHistoryLocation()!=null) {
 			try {
-				File f = Files.openOrCreateFile(getHistoryLocation()+".history");
+				File f = LocalStore.openOrCreateFile(getHistoryLocation()+".history");
 	    		try(FileWriter fwr = new FileWriter(f)) {
 	        		Gson gson = new GsonBuilder().create();
 	        		fwr.write(gson.toJson(historyList));
@@ -159,9 +158,9 @@ public class ComboBox<T> extends javafx.scene.control.ComboBox<T> {
 		if(!historyProperty().get()) return;
     	if(getHistoryLocation()!=null) {
 			try {
-				File f = Files.openOrCreateFile(getHistoryLocation()+".history");
+				File f = LocalStore.openOrCreateFile(getHistoryLocation()+".history");
 	       		Gson gson = new GsonBuilder().create();
-	       		historyList = gson.fromJson(Files.readFile(f), HashSet.class);
+	       		historyList = gson.fromJson(LocalStore.readTextFile(f), HashSet.class);
 			} catch (IOException e) {
 			}
     	}

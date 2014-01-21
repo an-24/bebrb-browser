@@ -23,6 +23,12 @@ public class LocalStore {
 		return f;
 	}
 	
+	public static File openOrCreateFile(String fname) throws IOException {
+		File f = new File(openStore(),fname);
+		if(!f.exists())	f.createNewFile();
+		return f;
+	}
+	
 	public static String readTextFile(File file) throws IOException {
 		StringBuffer sb = new StringBuffer(); 
 		try(BufferedReader br = new BufferedReader(new FileReader(file))) {

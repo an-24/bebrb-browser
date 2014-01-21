@@ -581,7 +581,7 @@
 	-fx-background-image:url('');
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: right center;
-	-fx-padding:5 5 5 5;	
+    -fx-padding: 5px 8px 5px 8px;
 }
 
 .suggestbox-noempty {
@@ -589,8 +589,8 @@
 	-fx-background-size:20px 20px;
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: right center;
-	-fx-padding:5 24 5 5;	
-}
+    -fx-padding: 5px 24px 5px 8px;
+ }
 
 .suggestbox-popup {
 	-fx-background-color:-fx-control-inner-background;
@@ -599,4 +599,11 @@
 	-fx-border-color:-fx-box-border;	
 	-fx-background-radius:6px;
 	-fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+}
+
+.toolbar {
+    -fx-background: derive(-fx-base,-30%);
+    -fx-background-color:
+        linear-gradient(to bottom, -fx-base 12%, derive(-fx-base,-20%) 95%);
+    -fx-background-radius: 0, 0 ;
 }

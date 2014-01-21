@@ -1,10 +1,6 @@
 package application;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -55,14 +51,14 @@ import org.bebrb.server.net.CommandHello;
 import org.bebrb.server.net.CommandHello.AppInfo;
 import org.bebrb.server.net.CommandLogin;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-
 import utils.DomainProperties;
 import utils.LocalStore;
 import utils.LocaleUtils;
 import application.NavigateStack.CommandPoint;
 import application.NavigateStack.CommandPointEx;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 
 public class TabInnerController {
 	@FXML
@@ -80,6 +76,8 @@ public class TabInnerController {
 	private ApplicationWorkspaceController appWorkspace;
 
 	private NavigateStack navStack = new NavigateStack();
+	private DomainInfo currentLocation = null;
+	private DomainInfo oldLocation = null;
 
 	private OnError errorHandler = new OnError() {
 		@Override
@@ -129,8 +127,7 @@ public class TabInnerController {
 			}
 		});
 
-		// FIXME demo
-		comboUri.setText("localhost:8080");
+		setTitlePage();
 		
 		comboUri.setItems(loadDomainHistory());
 		
@@ -172,13 +169,18 @@ public class TabInnerController {
 			@Override
 			public Node create(DomainInfo item) {
 				HBox hb = new HBox();
+				hb.setSpacing(5);
 				hb.setPadding(new Insets(5));
 				VBox vb = new VBox();
 				vb.setSpacing(5);
 				vb.getChildren().add(new Label(item.toString()));
 				vb.getChildren().add(new Label(item.title.isEmpty()?"Меню":item.title));
 				ImageView iv = new ImageView();
-//				iv.setImage(new Image());
+				String fname;
+				if(item.favorite) fname = "application/images/selected-star.png";
+							else  fname = "application/images/unselected-star.png";
+				iv.setImage(new Image(fname));
+				hb.setAlignment(Pos.CENTER_LEFT);
 				hb.getChildren().add(iv);
 				hb.getChildren().add(vb);
 				return hb;
@@ -192,54 +194,59 @@ public class TabInnerController {
 				try {
 					Host host = getHost();
 					// new domain
+					if(host==null) {
+						comboUri.setValue(null);
+						setTitlePage();
+					} else
 					if(comboUri.getValue()==null) {
 						DomainInfo di = new DomainInfo();
 						di.host =  host;
 						di.saveDate = new Date();
 						if(!findDomain(di)) {
 							comboUri.getItems().add(di);
-							comboUri.setValue(di);
 							saveDomainHistory();
 						}
+						comboUri.setValue(di);
 					}
-					query = new Client(host.domain, host.port,
-							new OnResponse() {
-								@Override
-								public void replyСame(String message)
-										throws Exception {
-									try {
-										// parse
-										CommandHello.Response response = CommandFactory
-												.createGson()
-												.fromJson(message,CommandHello.Response.class);
-										if (response.getStatus() != Command.OK) {
-											Main.log.log(Level.SEVERE,
-													response.getMessage()+ " detail:"+ response.getTrace());
-											throw new Exception(
-													String.format(Main.getStrings().getString("ex-OnServerError"),
-															response.getMessage()));
-										} else
-											Main.log.log(Level.INFO,
-													"response:" + message);
-										// handle
-										handleHello(response);
-									} finally {
-										// finish
-										Platform.runLater(new Runnable() {
-											@Override
-											public void run() {
-												ready();
-											}
-										});
-									}
-								}
-							}, errorHandler);
-					waiting();
-					try {
-						query.send(new CommandHello());
-					} finally {
-						query = null;
-					}
+					setLocation(comboUri.getValue());
+					// push save point
+					final DomainInfo saveLocation = oldLocation;
+					CommandNavigatePoint savepoint = new CommandNavigatePoint() {
+						DomainInfo location = currentLocation;
+
+						@Override
+						public void back() {
+							if(saveLocation!=null) {
+								comboUri.setValue(saveLocation);
+								callHello(saveLocation.host);
+							} else {
+								comboUri.setValue(null);
+								setTitlePage();
+							}
+							setLocation(saveLocation);
+						}
+
+						@Override
+						public void next() {
+							CommandPoint n = navStack.getNext(this);
+							if(n!=null && n instanceof CommandNavigatePoint) ((CommandNavigatePoint)n).call();	
+						}
+						
+						@Override
+						public void call() {
+							if(location==null) {
+								setTitlePage();
+							} else {
+								comboUri.setValue(location);
+								callHello(location.host);
+								setLocation(location);
+							}	
+						}
+						
+					};
+					navStack.push(savepoint);
+					savepoint.call();
+					lockControl();
 				} catch (URISyntaxException e) {
 					printError(Main.getStrings().getString("ex-URISyntaxError"));
 				}
@@ -257,6 +264,14 @@ public class TabInnerController {
 		return false;
 	}
 
+	protected boolean findDomain(List<DomainInfo> items, DomainInfo target) {
+		for (DomainInfo dinf : items) {
+			if(dinf.equals(target))
+				return true;
+		}
+		return false;
+	}
+	
 	private void saveDomainHistory() {
 		try {
 			File f = LocalStore.openStore();
@@ -284,7 +299,8 @@ public class TabInnerController {
 			if(array!=null)
 				for (int i = 0; i < array.size(); i++) {
 					DomainInfo dm = gson.fromJson(array.get(i), DomainInfo.class);
-					list.add(dm); 
+					if(dm.host==null || dm.host.domain==null) continue;
+					if(!findDomain(list,dm)) list.add(dm); 
 				}
 		} catch (IOException e) {
 			Main.log.log(Level.SEVERE, e.getCause().getMessage(),
@@ -644,15 +660,22 @@ public class TabInnerController {
 		setProgress(false);
 	}
 
+	private void setTitlePage() {
+		// TODO Auto-generated method stub
+		cleanScreen();
+	}
+
 	private Host getHost() throws URISyntaxException {
 		DomainInfo input = comboUri.getValue();
 		if(input==null) {
 			String s = comboUri.getText();
+			if(s==null || s.isEmpty()) return null;
 			if (!s.startsWith(Main.DSP_PROTOCOL) || !s.startsWith(Main.DSP_PROTOCOL_SECURY))
 				s = Main.DSP_PROTOCOL_SECURY + s;
 			URI uri = new URI(s);
 			String domain = uri.getHost();
 			int port = uri.getPort();
+			if(port<0) port = 80; //default port
 			boolean security = false; 
 			if(s.startsWith(Main.DSP_PROTOCOL_SECURY))
 				security = true;
@@ -664,6 +687,61 @@ public class TabInnerController {
 	protected void lockControl() {
 		btnBack.setDisable(!navStack.isBackPossible());
 		btnNext.setDisable(!navStack.isNextPossible());
+	}
+
+	private void callHello(Host host) {
+		query = new Client(host.domain, host.port,
+				new OnResponse() {
+					@Override
+					public void replyСame(String message)
+							throws Exception {
+						try {
+							if(message==null || message.isEmpty()) {
+								Main.log.log(Level.SEVERE,"Wrong responce (null or empty)");
+								throw new Exception(
+										String.format(Main.getStrings().getString("ex-ServerUnknownResponse")));
+							}
+							// parse
+							CommandHello.Response response = CommandFactory
+									.createGson()
+									.fromJson(message,CommandHello.Response.class);
+							if (response.getStatus() != Command.OK) {
+								Main.log.log(Level.SEVERE,
+										response.getMessage()+ " detail:"+ response.getTrace());
+								throw new Exception(
+										String.format(Main.getStrings().getString("ex-OnServerError"),
+												response.getMessage()));
+							} else
+								Main.log.log(Level.INFO,
+										"response:" + message);
+							// handle
+							handleHello(response);
+						} finally {
+							// finish
+							Platform.runLater(new Runnable() {
+								@Override
+								public void run() {
+									ready();
+								}
+							});
+						}
+					}
+				}, errorHandler);
+		waiting();
+		try {
+			query.send(new CommandHello());
+		} finally {
+			query = null;
+		}
+	}
+
+	private void setLocation(DomainInfo di) {
+		oldLocation = currentLocation; 
+		currentLocation = di;
+	}
+	
+	public interface CommandNavigatePoint extends CommandPoint {
+		void call();
 	}
 
 	public class Host {
@@ -686,7 +764,7 @@ public class TabInnerController {
 		private Date saveDate;
 		
 		public String toString() {
-			return host.domain+(host.port>0?":"+host.port:"")+appPath;
+			return host.domain+(host.port>0 && host.port!=80?":"+host.port:"")+appPath;
 		}
 		
 		public boolean equals(DomainInfo obj) {

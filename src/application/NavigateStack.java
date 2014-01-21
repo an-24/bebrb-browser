@@ -67,6 +67,19 @@ public class NavigateStack {
 		return topCommand!=null; 
 	}
 
+	public CommandPoint getNext(CommandPoint p) {
+		int idx = CommandStack.indexOf(p);
+		if(idx<CommandStack.size()-1)
+			return CommandStack.get(idx+1);
+		return null;
+	}
+
+	public CommandPoint getBack(CommandPoint p) {
+		int idx = CommandStack.indexOf(p);
+		if(idx>0) return CommandStack.get(idx-1);
+		return null;
+	}
+	
 	
 	public interface CommandPoint {
 		public void back();
