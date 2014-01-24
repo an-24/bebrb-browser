@@ -569,7 +569,12 @@
 }
 
 .errorinput {
-	-fx-background-color:derive(#FF0000,99%);
+	-fx-background-color: red,
+       linear-gradient(
+        to bottom,
+        derive(red,70%) 5%,
+        derive(red,90%) 40%
+       );
 }
 
 /* =============================================================================================================================
@@ -586,11 +591,16 @@
 
 .suggestbox-noempty {
 	-fx-background-image:url('images/clear.png');
-	-fx-background-size:20px 20px;
+	-fx-background-size:18px 18px;
 	-fx-background-repeat: no-repeat;
 	-fx-background-position: right center;
     -fx-padding: 5px 24px 5px 8px;
  }
+
+.suggestbox-noempty-hover {
+	-fx-background-image:url('images/clear-r.png');
+}	
+
 
 .suggestbox-popup {
 	-fx-background-color:-fx-control-inner-background;

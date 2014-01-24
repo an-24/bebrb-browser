@@ -18,7 +18,7 @@
             <Button fx:id="btnBack"/>
             <Button fx:id="btnNext"/>
             <SuggestBox id="cmbBox" fx:id="comboUri" editable="true" prefWidth="349.0" promptText="введите адрес приложения" style="-fx-right:0px;" HBox.hgrow="ALWAYS" />
-            <MenuButton contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" />
+            <MenuButton contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefWidth="-1.0"/>
           </children>
       	  <padding>
           	<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

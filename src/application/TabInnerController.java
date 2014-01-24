@@ -37,6 +37,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.Callback;
 
 import org.bebrb.client.Client;
+import org.bebrb.client.Client.EmptyBodyException;
 import org.bebrb.client.Client.ExecException;
 import org.bebrb.client.Client.OnError;
 import org.bebrb.client.Client.OnResponse;
@@ -55,7 +56,6 @@ import utils.DomainProperties;
 import utils.LocalStore;
 import utils.LocaleUtils;
 import application.NavigateStack.CommandPoint;
-import application.NavigateStack.CommandPointEx;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -75,28 +75,16 @@ public class TabInnerController {
 	private AppInfo selectedApplication;
 	private ApplicationWorkspaceController appWorkspace;
 
-	private NavigateStack navStack = new NavigateStack();
+	private NavigateStack navStack = new NavigateStack(new Callback<Void, Void>() {
+		@Override
+		public Void call(Void arg0) {
+			comboUri.setValue(null);
+			setTitlePage();
+			return null;
+		}
+	});
 	private DomainInfo currentLocation = null;
 	private DomainInfo oldLocation = null;
-
-	private OnError errorHandler = new OnError() {
-		@Override
-		public void errorCame(Exception ex) {
-			ready();
-			if (ex instanceof ExecException) {
-				String ms = ex.getMessage();
-				if (ms == null || ms.isEmpty()) {
-					ms = ex.getCause().getClass().getName();
-					Main.log.log(Level.SEVERE, ex.getCause().getMessage(),
-							ex.getCause());
-				}
-				printError(ms);
-			} else
-				printError(String.format(
-						Main.getStrings().getString("ex-NetError"),
-						ex.getMessage()));
-		}
-	};
 
 	@FXML
 	public void initialize() {
@@ -193,60 +181,27 @@ public class TabInnerController {
 				interrupt();
 				try {
 					Host host = getHost();
-					// new domain
+					// title
 					if(host==null) {
 						comboUri.setValue(null);
+						setLocation(null);
 						setTitlePage();
+						return;
 					} else
+					// new domain
 					if(comboUri.getValue()==null) {
-						DomainInfo di = new DomainInfo();
-						di.host =  host;
-						di.saveDate = new Date();
-						if(!findDomain(di)) {
-							comboUri.getItems().add(di);
-							saveDomainHistory();
-						}
+						DomainInfo di = newDomainInfo(host);
 						comboUri.setValue(di);
 					}
-					setLocation(comboUri.getValue());
-					// push save point
-					final DomainInfo saveLocation = oldLocation;
-					CommandNavigatePoint savepoint = new CommandNavigatePoint() {
-						DomainInfo location = currentLocation;
-
+					jump(comboUri.getValue(), new Callback<Host, Void>() {
 						@Override
-						public void back() {
-							if(saveLocation!=null) {
-								comboUri.setValue(saveLocation);
-								callHello(saveLocation.host);
-							} else {
-								comboUri.setValue(null);
-								setTitlePage();
+						public Void call(Host h) {
+							if(h.path.isEmpty()) callHello(h); else {
+								callByUri(h);
 							}
-							setLocation(saveLocation);
+							return null;
 						}
-
-						@Override
-						public void next() {
-							CommandPoint n = navStack.getNext(this);
-							if(n!=null && n instanceof CommandNavigatePoint) ((CommandNavigatePoint)n).call();	
-						}
-						
-						@Override
-						public void call() {
-							if(location==null) {
-								setTitlePage();
-							} else {
-								comboUri.setValue(location);
-								callHello(location.host);
-								setLocation(location);
-							}	
-						}
-						
-					};
-					navStack.push(savepoint);
-					savepoint.call();
-					lockControl();
+					});
 				} catch (URISyntaxException e) {
 					printError(Main.getStrings().getString("ex-URISyntaxError"));
 				}
@@ -255,13 +210,39 @@ public class TabInnerController {
 
 	}
 	
-	protected boolean findDomain(DomainInfo target) {
+	protected void jump(DomainInfo value, final Callback<Host, Void> callback) {
+		setLocation(value);
+		// push save point
+		CommandNavigatePoint savepoint = new CommandNavigatePoint() {
+			DomainInfo location = currentLocation;
+
+			@Override
+			public void restore() {
+				if(location!=null) {
+					comboUri.setValue(location);
+					callback.call(location.host);
+				} else {
+					comboUri.setValue(null);
+					setTitlePage();
+				}	
+				setLocation(location);
+			}
+		};
+		// push
+		navStack.push(savepoint);
+		callback.call(currentLocation.host);
+		lockControl();
+	}
+
+	protected int findDomain(DomainInfo target) {
 		List<DomainInfo> items = comboUri.getItems();
+		int i =0;
 		for (DomainInfo dinf : items) {
 			if(dinf.equals(target))
-				return true;
+				return i;
+			i++;
 		}
-		return false;
+		return -1;
 	}
 
 	protected boolean findDomain(List<DomainInfo> items, DomainInfo target) {
@@ -386,6 +367,12 @@ public class TabInnerController {
 			throws Exception {
 		final ApplicationWorkspaceController ctrl = Main.loadNodeController("ApplicationWorkspace.fxml");
 		ctrl.setTabController(this);
+		
+		DomainInfo di = newDomainInfo(getHostFromString(comboUri.getText()+"/"+selectedApplication.getName()+"/"+response.getSession().getVersion()));
+		di.title = selectedApplication.getTitle();
+		setLocation(di);
+		comboUri.setValue(di);
+		//comboUri.setDisable(true);
 		ctrl.setup(response);
 		appWorkspace = ctrl;
 		
@@ -396,39 +383,7 @@ public class TabInnerController {
 				root.setCenter(ctrl.getRoot());
 			}
 		});
-		// push save point
-		CommandPointEx savepoint = new CommandPointEx() {
-			@Override
-			public void back() {
-				try {
-					cleanScreen();
-					login(selectedApplication);
-				} catch (Exception e) {
-					Main.log.log(Level.SEVERE, e.getMessage(), e);
-				}
-			}
-
-			@Override
-			public void next() {
-				try {
-					handleLogin(response);
-				} catch (Exception e) {
-					Main.log.log(Level.SEVERE, e.getMessage(), e);
-				}
-			}
-
-			@Override
-			public void afterBack() {
-				//cut stack
-				navStack.cut(navStack.getTop());
-				lockControl();
-			}
-
-			@Override
-			public void afterNext() {
-			}
-		};
-		navStack.push(savepoint);
+		navStack.clear();
 		lockControl();
 	}
 
@@ -498,32 +453,8 @@ public class TabInnerController {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
-					final AppInfo selectedApp = list.getSelectionModel()
-							.getSelectedItem();
-					// push save point
-					CommandPoint savepoint = new CommandPoint() {
-						@Override
-						public void back() {
-							try {
-								handleHello(response);
-							} catch (Exception e) {
-								Main.log.log(Level.SEVERE, e.getMessage(), e);
-							}
-						}
-
-						@Override
-						public void next() {
-							try {
-								login(selectedApp);
-							} catch (Exception e) {
-								Main.log.log(Level.SEVERE, e.getMessage(), e);
-							}
-						}
-					};
-					navStack.push(savepoint);
-					// next command
-					savepoint.next();
-					lockControl();
+					final AppInfo selectedApp = list.getSelectionModel().getSelectedItem();
+					login(selectedApp);
 				} catch (Exception e) {
 					Main.log.log(Level.SEVERE, e.getMessage(), e);
 				}
@@ -536,7 +467,12 @@ public class TabInnerController {
 		root.setCenter(new AnchorPane());
 	}
 
-	private void login(final AppInfo app) throws Exception {
+	public void login(String appName) throws Exception {
+		AppInfo ainfo = new AppInfo(appName);
+		login(ainfo);
+	}
+	
+	public void login(final AppInfo app) throws Exception {
 		final LoginController ctrl = Main.loadNodeController("Login.fxml");
 		final Dialog dlg = new Dialog((Pane) root.getCenter(), ctrl.getRoot());
 		
@@ -551,7 +487,7 @@ public class TabInnerController {
 			@Override
 			public boolean handle(boolean btnOk) {
 				if (!btnOk) {
-					navStack.back();
+					dlg.close();
 					return true;
 				}
 				boolean r = ctrl.getValidateControl().action(ctrl.getRoot());
@@ -594,25 +530,7 @@ public class TabInnerController {
 											});
 										}
 									}
-								}, new OnError() {
-									@Override
-									public void errorCame(Exception ex) {
-										Main.log.log(Level.SEVERE, ex.getCause().getMessage(), ex.getCause());
-										ready();
-										dlg.ready();
-										if (ex instanceof ExecException) {
-											String ms = ex.getMessage();
-											if (ms == null || ms.isEmpty()) {
-												ms = ex.getCause().getClass().getName();
-											}
-											dlg.addActionMessage(ms);
-										} else {
-											dlg.addActionMessage(String
-													.format(Main.getStrings().getString("ex-NetError"),
-															ex.getMessage()));
-										}	
-									}
-								});
+								}, getErrorHandler(dlg));
 						try {
 							try {
 								// save default
@@ -665,23 +583,25 @@ public class TabInnerController {
 		cleanScreen();
 	}
 
+	private Host getHostFromString(String s) throws URISyntaxException {
+		if(s==null || s.isEmpty()) return null;
+		if (!s.startsWith(Main.DSP_PROTOCOL) || !s.startsWith(Main.DSP_PROTOCOL_SECURY))
+			s = Main.DSP_PROTOCOL_SECURY + s;
+		URI uri = new URI(s);
+		String domain = uri.getHost();
+		int port = uri.getPort();
+		if(port<0) port = 80; //default port
+		boolean security = false; 
+		if(s.startsWith(Main.DSP_PROTOCOL_SECURY))
+			security = true;
+		String path = uri.getPath();
+		return new Host(domain, port,security,path==null?"":path);
+	}
+	
 	private Host getHost() throws URISyntaxException {
 		DomainInfo input = comboUri.getValue();
-		if(input==null) {
-			String s = comboUri.getText();
-			if(s==null || s.isEmpty()) return null;
-			if (!s.startsWith(Main.DSP_PROTOCOL) || !s.startsWith(Main.DSP_PROTOCOL_SECURY))
-				s = Main.DSP_PROTOCOL_SECURY + s;
-			URI uri = new URI(s);
-			String domain = uri.getHost();
-			int port = uri.getPort();
-			if(port<0) port = 80; //default port
-			boolean security = false; 
-			if(s.startsWith(Main.DSP_PROTOCOL_SECURY))
-				security = true;
-			return new Host(domain, port,security);
-		} else
-			return input.host;
+		if(input==null) return getHostFromString(comboUri.getText());
+				   else return input.host;
 	}
 
 	protected void lockControl() {
@@ -693,14 +613,8 @@ public class TabInnerController {
 		query = new Client(host.domain, host.port,
 				new OnResponse() {
 					@Override
-					public void replyСame(String message)
-							throws Exception {
+					public void replyСame(String message) throws Exception {
 						try {
-							if(message==null || message.isEmpty()) {
-								Main.log.log(Level.SEVERE,"Wrong responce (null or empty)");
-								throw new Exception(
-										String.format(Main.getStrings().getString("ex-ServerUnknownResponse")));
-							}
 							// parse
 							CommandHello.Response response = CommandFactory
 									.createGson()
@@ -726,7 +640,7 @@ public class TabInnerController {
 							});
 						}
 					}
-				}, errorHandler);
+				}, getErrorHandler());
 		waiting();
 		try {
 			query.send(new CommandHello());
@@ -735,24 +649,100 @@ public class TabInnerController {
 		}
 	}
 
+	private void callByUri(Host h) throws Exception {
+		TabInnerController tab = MainController.findTabByLocation(h.getLocation());
+		if(tab==null) {
+			tab = this;
+			tab.login(h.toString());
+		}
+		//TODO
+	}
+	
 	private void setLocation(DomainInfo di) {
 		oldLocation = currentLocation; 
 		currentLocation = di;
 	}
+
+	private OnError getErrorHandler() {
+		return getErrorHandler(null);
+	}
 	
+	private OnError getErrorHandler(final Dialog dlg) {
+		return new OnError() {
+			@Override
+			public void errorCame(Exception ex) {
+				ready();
+				if(dlg!=null) dlg.ready();
+				if(ex instanceof EmptyBodyException) {
+					Main.log.log(Level.SEVERE,"Wrong responce (null or empty)");
+					show(String.format(Main.getStrings().getString("ex-ServerUnknownResponse")));
+				} else
+				if (ex instanceof ExecException) {
+					String ms = ex.getMessage();
+					if (ms == null || ms.isEmpty()) {
+						if(ex.getCause()!=null) {
+							ms = ex.getCause().getClass().getName();
+							Main.log.log(Level.SEVERE, ex.getCause().getMessage(),ex.getCause());
+						} else {
+							ms = ex.getClass().getName();
+							Main.log.log(Level.SEVERE, ms,ex);
+						}	
+					}
+					show(ms);
+				} else {
+					Main.log.log(Level.SEVERE, ex.getMessage(),ex);
+					show(String.format(
+							Main.getStrings().getString("ex-NetError"),
+							ex.getMessage()));
+				}	
+			}
+			
+			private void show(String msg) {
+				if(dlg==null) printError(msg);else
+					dlg.addActionMessage(msg);
+			}
+		};
+	}
+	
+	private DomainInfo newDomainInfo(Host host) {
+		DomainInfo di = new DomainInfo();
+		di.host =  host;
+		di.appPath = host.path;
+		di.saveDate = new Date();
+		int idx = findDomain(di);
+		if(idx<0) {
+			comboUri.getItems().add(di);
+			saveDomainHistory();
+		} else {
+			// replace
+			comboUri.getItems().remove(idx);
+			comboUri.getItems().add(di);
+		}
+		return di;
+	}
+
 	public interface CommandNavigatePoint extends CommandPoint {
-		void call();
 	}
 
 	public class Host {
 		public final boolean security;
 		public final String domain;
 		public final int port;
+		public final String path;
 
-		public Host(String domain, int port, boolean security) {
+		public Host(String domain, int port, boolean security, String path) {
 			this.domain = domain;
 			this.port = port;
 			this.security = security;
+			this.path = path;
+		}
+
+		public String getLocation() {
+			return toString()+path;
+		}
+		
+		public String toString() {
+			return domain+(port>0 && port!=80?":"+port:"");
 		}
 	}
 	
@@ -764,7 +754,7 @@ public class TabInnerController {
 		private Date saveDate;
 		
 		public String toString() {
-			return host.domain+(host.port>0 && host.port!=80?":"+host.port:"")+appPath;
+			return host.toString()+appPath;
 		}
 		
 		public boolean equals(DomainInfo obj) {

@@ -3,6 +3,7 @@ package application;
 import java.io.IOException;
 import java.util.logging.Level;
 
+import application.TabInnerController.DomainInfo;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -78,4 +79,9 @@ public class MainController {
 	public void initialize() {
 		Tab newtab = newPage();
 	}
+	
+	public static TabInnerController findTabByLocation(String location) {
+		//TODO
+		return null;
+	} 
 }

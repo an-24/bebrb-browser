@@ -2,7 +2,15 @@ package application;
 
 import java.util.ArrayList;
 
+import javafx.util.Callback;
+
 public class NavigateStack {
+	Callback<Void, Void> endPoint;
+
+	public NavigateStack(Callback<Void, Void> endPoint) {
+		this.endPoint = endPoint;
+	}
+
 
 	private ArrayList<CommandPoint> CommandStack = new ArrayList<>();
 	private CommandPoint topCommand = null;
@@ -22,6 +30,11 @@ public class NavigateStack {
 		return topCommand;
 	}
 
+	public void clear() {
+		topCommand = null;
+		CommandStack.clear();
+	}
+	
 	public int cut(CommandPoint point) {
 		int r = 0;
 		int idx = CommandStack.indexOf(point);
@@ -35,26 +48,24 @@ public class NavigateStack {
 	
 	public void back() {
 		if(isBackPossible()) {
-			CommandPoint cmd = topCommand; 
-			cmd.back();
 			int idx = CommandStack.indexOf(topCommand);
-			if(idx==0) topCommand = null; 
-				 else topCommand = CommandStack.get(idx-1);
-			if(cmd instanceof CommandPointEx)
-				((CommandPointEx)cmd).afterBack();
+			if(idx==0) {
+				topCommand = null;
+				endPoint.call(null);
+			} else {
+				topCommand = CommandStack.get(idx-1);
+				topCommand.restore();
+			}
 		}
 	}
 
 	public void next() {
 		if(isNextPossible()) {
-			if(topCommand==null) topCommand = CommandStack.get(0); 
-			CommandPoint cmd = topCommand; 
-			cmd.next();
 			int idx = CommandStack.indexOf(topCommand);
-			if(idx<CommandStack.size()-1)
-				topCommand = CommandStack.get(idx+1); 
-			if(cmd instanceof CommandPointEx)
-				((CommandPointEx)cmd).afterNext();
+			if(idx<CommandStack.size()-1) {
+				topCommand = CommandStack.get(idx+1);
+				 topCommand.restore();
+			}	
 		}
 	}
 	
@@ -82,11 +93,7 @@ public class NavigateStack {
 	
 	
 	public interface CommandPoint {
-		public void back();
-		public void next();
+		public void restore();
 	}
-	public interface CommandPointEx extends CommandPoint {
-		public void afterBack();
-		public void afterNext();
-	}
+
 }

@@ -74,17 +74,24 @@ public class SuggestBox<T> extends TextField {
 			}
 		};
 		
-		addEventHandler(MouseEvent.MOUSE_MOVED,new EventHandler<MouseEvent>() {
+		EventHandler<MouseEvent> mouseHandler = new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
 				double x = event.getX();
-				if(x>getWidth()-WIDTH_BUTTON_CLEAR && showingCleanButton)
-					SuggestBox.this.setCursor(Cursor.HAND); else
+				if(x>getWidth()-WIDTH_BUTTON_CLEAR && showingCleanButton){
+					SuggestBox.this.setCursor(Cursor.HAND); 
+				} else {
 					SuggestBox.this.setCursor(Cursor.TEXT);	
+				}
 						
 			}
 			
-		});
+		};
+		addEventHandler(MouseEvent.MOUSE_MOVED,mouseHandler);
+		addEventHandler(MouseEvent.MOUSE_ENTERED,mouseHandler);
+		addEventHandler(MouseEvent.MOUSE_EXITED,mouseHandler);
+		
+		
 		addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 
 			@Override
@@ -99,7 +106,8 @@ public class SuggestBox<T> extends TextField {
 				// arrow down
 				if(event.getCode()==KeyCode.DOWN) {
 					if(!showingSuggestBox) return;
-					deSelectItemInList(currItem);
+					deSelectItemInList();
+					//deSelectItemInList(currItem);
 					currItem = nextItem(currItem);
 					if(currItem==null) currItem = getLastItem();
 					selectItemInList(currItem);
@@ -107,7 +115,8 @@ public class SuggestBox<T> extends TextField {
 				} else
 				// arrow up
 				if(event.getCode()==KeyCode.UP) {
-					deSelectItemInList(currItem);
+					deSelectItemInList();
+					//deSelectItemInList(currItem);
 					if(!showingSuggestBox) return;
 					currItem = priorItem(currItem);
 					if(currItem==null) currItem = getFirstItem();
@@ -116,6 +125,7 @@ public class SuggestBox<T> extends TextField {
 				}
 				//ENTER
 				if(event.getCode()==KeyCode.ENTER) {
+					if(currItem!=null) choise(currItem);
 					hideSuggestPopup();
 				}
 			}
@@ -145,6 +155,12 @@ public class SuggestBox<T> extends TextField {
 		n.setStyle("-fx-background-color:transparent;");
 	}
 
+	private void deSelectItemInList() {
+		for(Node n :nodeMap.keySet()) {
+			n.setStyle("-fx-background-color:transparent;");
+		}
+	}
+	
 	private void stopSuggestTimeout() {
 		if(inputTimer!=null) inputTimer.cancel();
 		inputTimer = null;
@@ -174,7 +190,8 @@ public class SuggestBox<T> extends TextField {
 		getStyleClass().remove(SUGGESTBOX_STYLE+"-noempty");
 		getStyleClass().remove(SUGGESTBOX_STYLE+"-empty");
 		if(b) {
-			getStyleClass().add(SUGGESTBOX_STYLE+"-noempty");
+			String cname = SUGGESTBOX_STYLE+"-noempty";
+			getStyleClass().add(cname);
 			addEventHandler(MouseEvent.MOUSE_CLICKED, emptyButtonHandler);
 		} else {
 			getStyleClass().add(SUGGESTBOX_STYLE+"-empty");
@@ -250,6 +267,7 @@ public class SuggestBox<T> extends TextField {
 	}
 
 	private boolean fillItemsInBox(VBox box) {
+		currItem = null;
 		if(onFilterItem==null && items==null) return false;
 		List<T> list;
 		if(onFilterItem!=null) {

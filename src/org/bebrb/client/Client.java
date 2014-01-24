@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.logging.Logger;
 
 import javafx.application.Platform;
 
@@ -22,6 +23,7 @@ public class Client {
 	private Thread thread = null;
 	
 	public static final NetConsole console = new NetConsole();  
+	public static final Logger log = Logger.getLogger("bebrb");
 
 	public Client(String host, int port, OnResponse response, OnError error) {
 		this.response = response;
@@ -47,6 +49,7 @@ public class Client {
 						String q = CommandFactory.toJson(cmd);
 
 						NetPoint point = console.push(new NetConsole.NetPoint(q));
+						log.info(q);
 						
 						out.write(q);
 						out.flush();
@@ -61,6 +64,9 @@ public class Client {
 						}
 						
 						point.finish(data);
+						
+						if(data.isEmpty())
+							throw new EmptyBodyException();
 					};
 					try {
 						response.replyСame(data);
@@ -108,5 +114,9 @@ public class Client {
 		}
 	}
 
+	@SuppressWarnings("serial")
+	public class EmptyBodyException extends Exception {
+		
+	}
 
 }

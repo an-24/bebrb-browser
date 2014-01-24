@@ -5,6 +5,7 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 
 import org.bebrb.server.net.CommandLogin;
+import org.bebrb.server.net.CommandLogin.SessionInfo;
 
 import utils.LocaleUtils;
 import javafx.fxml.FXML;
@@ -24,6 +25,8 @@ public class ApplicationWorkspaceController {
     private AnchorPane root;
 
 	private TabInnerController tabController;
+
+	private SessionInfo session;
 
 
     @FXML
@@ -49,6 +52,8 @@ public class ApplicationWorkspaceController {
 
 
 	public void setup(CommandLogin.Response response) {
+		session = response.getSession();
+		
 		// TODO Auto-generated method stub
 		
 	}

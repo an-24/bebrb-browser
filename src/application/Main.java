@@ -10,6 +10,8 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.bebrb.client.Client.OnError;
+
 import utils.DomainProperties;
 import utils.UTF8Control;
 import javafx.application.Application;
@@ -87,5 +89,5 @@ public class Main extends Application {
 	public static DomainProperties getDomainProperties(String domain) throws FileNotFoundException, IOException {
 		return new DomainProperties(domain);
 	}
-
+	
 }
