@@ -4,8 +4,8 @@ import java.util.logging.Level;
 
 import org.bebrb.client.controls.validators.EmptyValidator;
 import org.bebrb.client.controls.validators.ValidateController;
+import org.bebrb.client.utils.LocaleUtils;
 
-import utils.LocaleUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.Labeled;

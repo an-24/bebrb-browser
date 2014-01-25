@@ -1,4 +1,4 @@
-package utils;
+package org.bebrb.client.utils;
 
 import java.lang.reflect.Field;
 

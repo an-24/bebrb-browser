@@ -2,7 +2,68 @@
 
 <?import java.lang.*?>
 <?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 
-<AnchorPane id="AnchorPane" fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.ApplicationWorkspaceController" />
+<BorderPane fx:id="root" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.ApplicationWorkspaceController">
+  <center>
+    <VBox prefHeight="-1.0" prefWidth="-1.0">
+      <children>
+        <ToolBar prefWidth="-1.0">
+          <items>
+            <TextField />
+          </items>
+        </ToolBar>
+        <TreeView prefHeight="-1.0" prefWidth="-1.0" />
+      </children>
+    </VBox>
+  </center>
+  <left>
+    <VBox prefHeight="-1.0" prefWidth="-1.0" spacing="2.0" style="-fx-background-color: gray;">
+      <children>
+        <Button fx:id="btnHome" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefHeight="-1.0" text="Button" textAlignment="CENTER">
+          <graphic>
+            <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+              <image>
+                <Image url="@images/m3.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Button>
+        <Button fx:id="btnR" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefHeight="44.0" prefWidth="58.0" text="Button" textAlignment="CENTER">
+          <graphic>
+            <ImageView fitHeight="31.01114155201358" fitWidth="39.9998779296875" pickOnBounds="true" preserveRatio="true">
+              <image>
+                <Image url="@images/m1.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Button>
+        <Button fx:id="btnHistory" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefHeight="44.0" prefWidth="58.0" text="Button" textAlignment="CENTER">
+          <graphic>
+            <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+              <image>
+                <Image url="@images/m2.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Button>
+        <Button fx:id="btnSettings" contentDisplay="GRAPHIC_ONLY" mnemonicParsing="false" prefHeight="44.0" prefWidth="58.0" text="Button" textAlignment="CENTER">
+          <graphic>
+            <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+              <image>
+                <Image url="@images/m4.png" />
+              </image>
+            </ImageView>
+          </graphic>
+        </Button>
+      </children>
+      <padding>
+        <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+      </padding>
+    </VBox>
+  </left>
+</BorderPane>

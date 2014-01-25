@@ -11,9 +11,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bebrb.client.Client.OnError;
+import org.bebrb.client.utils.DomainProperties;
+import org.bebrb.client.utils.UTF8Control;
 
-import utils.DomainProperties;
-import utils.UTF8Control;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.scene.Parent;
@@ -88,6 +88,10 @@ public class Main extends Application {
 	
 	public static DomainProperties getDomainProperties(String domain) throws FileNotFoundException, IOException {
 		return new DomainProperties(domain);
+	}
+
+	public static void exit() {
+		// TODO Auto-generated method stub
 	}
 	
 }

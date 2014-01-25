@@ -50,8 +50,8 @@ public class MainController {
 			// wallpaper
 			setWallPaper(appTab,Main.wallPaperName);
 			// титульная страница
-			loader = Main.getLoader("TitlePage.fxml");
-			((BorderPane)pane.getChildren().get(0)).setCenter((Parent) loader.load());
+			//loader = Main.getLoader("TitlePage.fxml");
+			//((BorderPane)pane.getChildren().get(0)).setCenter((Parent) loader.load());
 		} catch (IOException e) {
 			Main.log.log(Level.SEVERE, e.getMessage(), e);
 		}

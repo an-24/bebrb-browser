@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bebrb.client.utils.LocaleUtils;
+
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -21,7 +23,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import utils.LocaleUtils;
 import application.DialogController;
 import application.Main;
 
@@ -33,6 +34,8 @@ public class Dialog {
 	private DialogController ctrlDialog;
 	private DialogResult handlerOk;
 	private Node firstInFocus = null;
+	private boolean visible;
+	private int waitCount;
 
 	public Dialog(Pane root, Node source) {
 		this.root = root;
@@ -43,9 +46,11 @@ public class Dialog {
 		handlerOk = handler;
 		Pane dlg = beforeShow();
 		dlg.getChildren().add(source);
+		visible = true;
 	}
 	
 	public void close() {
+		visible = false;
 		root.getChildren().remove(ctrlDialog.getRoot());
 		root.getChildren().remove(maskPane);
 		for (Node n : lockedControls) n.setDisable(false);
@@ -93,14 +98,28 @@ public class Dialog {
 	}
 	
 	public void waiting() {
-		ctrlDialog.getRoot().setDisable(true);
-		setProgress(true);
+		if(waitCount==0) {
+			ctrlDialog.getRoot().setDisable(true);
+			setProgress(true);
+		}
+		waitCount++;
 	}
 
 	public void ready() {
-		ctrlDialog.getRoot().setDisable(false);
-		setProgress(false);
+		waitCount--;
+		if(waitCount==0) {
+			ctrlDialog.getRoot().setDisable(false);
+			setProgress(false);
+		}
 	}
+
+	public boolean isVisible() {
+		return visible;
+	}
+	
+	public boolean isReady() {
+		return waitCount==0;
+	} 
 	
 	private Pane beforeShow() throws IOException {
 		// mask pane
@@ -228,6 +247,7 @@ public class Dialog {
 		public boolean handle(boolean btnOk);
 		public void after();
 	}
+
 	
 
 }

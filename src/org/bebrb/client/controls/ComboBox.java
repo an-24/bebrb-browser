@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.bebrb.client.utils.LocalStore;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -15,7 +17,6 @@ import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.control.SingleSelectionModel;
-import utils.LocalStore;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

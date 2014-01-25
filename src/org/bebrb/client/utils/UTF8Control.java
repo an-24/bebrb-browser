@@ -1,4 +1,4 @@
-package utils;
+package org.bebrb.client.utils;
 
 import java.io.IOException;
 import java.io.InputStream;

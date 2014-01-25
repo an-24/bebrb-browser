@@ -2,7 +2,8 @@ package application;
 
 import java.util.logging.Level;
 
-import utils.LocaleUtils;
+import org.bebrb.client.utils.LocaleUtils;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;

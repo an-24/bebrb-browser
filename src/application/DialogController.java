@@ -2,12 +2,13 @@ package application;
 
 import java.util.logging.Level;
 
+import org.bebrb.client.utils.LocaleUtils;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import utils.LocaleUtils;
 
 public class DialogController {
 
