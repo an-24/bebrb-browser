@@ -2,25 +2,24 @@ package application;
 
 import java.util.logging.Level;
 
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.layout.Pane;
 import org.bebrb.client.FormController;
 import org.bebrb.client.utils.LocaleUtils;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
-
-public class DialogController extends FormController {
+public class DialogConfirmController extends FormController {
 
 	@FXML
 	private Button btnOk;
 	@FXML
+	private Button btnYes;
+	@FXML
+	private Button btnNo;
+	@FXML
 	private Button btnCancel;
 	@FXML
-	private AnchorPane apContent;
-	@FXML
-	private VBox errorBox;
+	private Pane apContent;
 	@FXML
 	private Pane root;
 	
@@ -33,25 +32,31 @@ public class DialogController extends FormController {
 			Main.log.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
-
+	
+	@Override
 	public Pane getRoot() {
 		return root;
+	}
+
+	@Override
+	public Pane getContent() {
+		return apContent;
 	}
 
 	public Button getBtnOk() {
 		return btnOk;
 	}
 
+	public Button getBtnYes() {
+		return btnYes;
+	}
+
+	public Button getBtnNo() {
+		return btnNo;
+	}
+
 	public Button getBtnCancel() {
 		return btnCancel;
 	}
 
-	public VBox getErrorBox() {
-		return errorBox;
-	}
-
-	@Override
-	public AnchorPane getContent() {
-		return apContent;
-	}
 }

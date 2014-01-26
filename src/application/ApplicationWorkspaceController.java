@@ -1,5 +1,6 @@
 package application;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -7,6 +8,9 @@ import java.util.logging.Level;
 
 import org.bebrb.client.Client;
 import org.bebrb.client.Client.OnResponse;
+import org.bebrb.client.MessageDialog;
+import org.bebrb.client.MessageDialog.Type;
+import org.bebrb.client.controls.PaneControl;
 import org.bebrb.client.utils.LocaleUtils;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
@@ -23,7 +27,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -57,6 +60,8 @@ public class ApplicationWorkspaceController {
 	private String currentUser;
 	private CommandGetAppContext.Response appContext;
 
+	private PaneControl pagectrl;
+
 
 
     @FXML
@@ -70,11 +75,28 @@ public class ApplicationWorkspaceController {
 		btnHome.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent arg0) {
-				choiseHome();
+				choiceHome();
+			}
+		});
+		btnR.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent arg0) {
+				choiceDataPage();
+			}
+		});
+		btnHistory.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent arg0) {
+				choiceHistoryPage();
+			}
+		});
+		btnSettings.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent arg0) {
+				choiceSettingsPage();
 			}
 		});
     }
-
 
 	public Node getRoot() {
 		return root;
@@ -85,11 +107,22 @@ public class ApplicationWorkspaceController {
 	}
 
 
-	public void setup(String user, CommandLogin.Response response) throws URISyntaxException {
+	public void setup(String user, CommandLogin.Response response) throws URISyntaxException, IOException {
 		session = response.getSession();
 		this.currentUser = user;
 		currentHost = tabController.getHost();
 		callGetAppContext();
+		
+		pagectrl = new PaneControl();
+		root.setCenter(pagectrl);
+		
+		// home
+		HomePageController ctrl = Main.loadNodeController("HomePage.fxml");
+		pagectrl.getPages().add(ctrl.getRoot());
+		
+		pagectrl.getPages().add(null);
+		pagectrl.getPages().add(null);
+		pagectrl.getPages().add(null);
 	}
 
 
@@ -176,9 +209,24 @@ public class ApplicationWorkspaceController {
 		AnchorPane.setRightAnchor(root,0D);
 	}
 	
-	private void choiseHome() {
-		// TODO Auto-generated method stub
-		
+	private void choiceHome() {
+		pagectrl.setActivePage(0);
 	}
+
+	protected void choiceDataPage() {
+		pagectrl.setActivePage(1);
+	}
+
+	protected void choiceHistoryPage() {
+		pagectrl.setActivePage(2);
+	}
+	
+	protected void choiceSettingsPage() {
+		pagectrl.setActivePage(3);
+	}
+
+
+
+
 
 }

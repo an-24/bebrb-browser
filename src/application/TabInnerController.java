@@ -47,8 +47,9 @@ import org.bebrb.client.Client.EmptyBodyException;
 import org.bebrb.client.Client.ExecException;
 import org.bebrb.client.Client.OnError;
 import org.bebrb.client.Client.OnResponse;
+import org.bebrb.client.CustomDialog.ButtonType;
+import org.bebrb.client.CustomDialog.DialogResult;
 import org.bebrb.client.Dialog;
-import org.bebrb.client.Dialog.DialogResult;
 import org.bebrb.client.controls.InfoBox;
 import org.bebrb.client.controls.SuggestBox;
 import org.bebrb.client.controls.SuggestBox.CellFactory;
@@ -530,8 +531,8 @@ public class TabInnerController {
 		
 		dlg.showForResult(new DialogResult() {
 			@Override
-			public boolean handle(boolean btnOk) {
-				if (!btnOk) {
+			public boolean handle(ButtonType btn) {
+				if (btn == ButtonType.Cancel) {
 					dlg.close();
 					return true;
 				}
