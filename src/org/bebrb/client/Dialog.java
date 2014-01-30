@@ -16,6 +16,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 
 import org.bebrb.client.utils.LocaleUtils;
+import org.omg.CORBA.CTX_RESTRICT_SCOPE;
 
 import application.DialogController;
 import application.Main;
@@ -97,17 +98,16 @@ public class Dialog extends CustomDialog {
 			double max = ((Region)source).getMaxWidth();
 			if(max>=0) dlg.setMaxWidth(max+20D); 
 		}
-		root.getChildren().add(dlg);
 		
 		ctrl.getBtnOk().setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if(!handlerOk.before()) return;
+				if(!handlerOk.before(Dialog.this)) return;
 				clearActionMessages();
 				try {
-					if(handlerOk.handle(ButtonType.Ok)) close();
+					if(handlerOk.handle(Dialog.this,ButtonType.Ok)) close();
 				} finally {
-					handlerOk.after();
+					handlerOk.after(Dialog.this);
 				}
 			}
 		});
@@ -115,11 +115,19 @@ public class Dialog extends CustomDialog {
 		ctrl.getBtnCancel().setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if(handlerOk.handle(ButtonType.Cancel)) close();
+				if(handlerOk.handle(Dialog.this,ButtonType.Cancel)) close();
 			}
 		});
 		return ctrl;
 	}
+	
+	public void close() {
+		// bug javafx: акселератор не проверяет видимость
+		((DialogController)getController()).getBtnOk().setDisable(true);
+		((DialogController)getController()).getBtnCancel().setDisable(true);
+		super.close();
+	}
+	
 
 	private void setProgress(final boolean b) {
 		if(Main.getFXThread()!=Thread.currentThread()) {

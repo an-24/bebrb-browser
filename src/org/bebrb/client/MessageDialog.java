@@ -72,11 +72,11 @@ public class MessageDialog extends CustomDialog {
 						close();
 						return;
 					}
-					if(!handlerOk.before()) return;
+					if(!handlerOk.before(MessageDialog.this)) return;
 					try {
-						if(handlerOk.handle(pushedButton)) close();
+						if(handlerOk.handle(MessageDialog.this,pushedButton)) close();
 					} finally {
-						handlerOk.after();
+						handlerOk.after(MessageDialog.this);
 					}
 				}
 			}; 
@@ -120,14 +120,13 @@ public class MessageDialog extends CustomDialog {
 						close();
 						return;
 					}
-					if(handlerOk.handle(ButtonType.Cancel)) close();
+					if(handlerOk.handle(MessageDialog.this,ButtonType.Cancel)) close();
 				}
 			});
 			
 			defFocus = ((DialogConfirmController) ctrl).getBtnCancel();
 			break;
 		}
-		root.getChildren().add(ctrl.getRoot());
 		return ctrl;
 	}
 

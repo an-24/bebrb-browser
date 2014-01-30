@@ -95,6 +95,7 @@
    			<element name="database" type="tns:databaseType" minOccurs="0"/>
    		</sequence>
    		<attribute name="id" type="QName" use="required"/>
+   		<attribute name="name" type="string" default="-"/>
    		<attribute name="key" type="QName"/>
    		<attribute name="lazy" type="boolean" default="true"/>
  	    <attribute name="cache-control" type="tns:cacheControlType" default="None"/>

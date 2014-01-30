@@ -3,6 +3,11 @@ package application;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 
@@ -15,10 +20,14 @@ import org.bebrb.client.utils.LocaleUtils;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandGetAppContext;
+import org.bebrb.server.net.CommandGetAppContext.DataSource;
+import org.bebrb.server.net.CommandGetAppContext.Reference;
 import org.bebrb.server.net.CommandGetAppContext.Response;
+import org.bebrb.server.net.CommandGetAppContext.View;
 import org.bebrb.server.net.CommandLogin;
 import org.bebrb.server.net.CommandLogin.SessionInfo;
 
+import application.ApplicationWorkspaceController.NodeData.NodeType;
 import application.TabInnerController.DomainInfo;
 import application.TabInnerController.Host;
 import javafx.application.Platform;
@@ -27,22 +36,18 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.util.Callback;
 
 
 public class ApplicationWorkspaceController {
-
-    @FXML
-    private ResourceBundle resources;
-
-    @FXML
-    private URL location;
-
     @FXML
     private BorderPane root;
-    
     @FXML
     private Button btnHome;
     @FXML
@@ -61,6 +66,10 @@ public class ApplicationWorkspaceController {
 	private CommandGetAppContext.Response appContext;
 
 	private PaneControl pagectrl;
+
+	private HomePageController ctrlHome;
+
+	private TreeView<String> tree;
 
 
 
@@ -117,8 +126,8 @@ public class ApplicationWorkspaceController {
 		root.setCenter(pagectrl);
 		
 		// home
-		HomePageController ctrl = Main.loadNodeController("HomePage.fxml");
-		pagectrl.getPages().add(ctrl.getRoot());
+		ctrlHome = Main.loadNodeController("HomePage.fxml");
+		pagectrl.getPages().add(ctrlHome.getRoot());
 		
 		pagectrl.getPages().add(null);
 		pagectrl.getPages().add(null);
@@ -127,6 +136,7 @@ public class ApplicationWorkspaceController {
 
 
 	private void callGetAppContext() throws URISyntaxException {
+		btnHome.setDisable(true);
 		query = new Client(currentHost.domain, currentHost.port,
 				new OnResponse() {
 			@Override
@@ -169,6 +179,7 @@ public class ApplicationWorkspaceController {
 
 	private void handleAppContext(final Response response) throws URISyntaxException {
 		appContext = response;
+		btnHome.setDisable(false);
 		String location = currentHost.toString()+"/"+response.getName()+"/"+session.getVersion();
 		final DomainInfo di = tabController.newDomainInfo(TabInnerController.getHostFromString(location));
 		Platform.runLater(new Runnable() {
@@ -210,8 +221,10 @@ public class ApplicationWorkspaceController {
 	}
 	
 	private void choiceHome() {
+		fillTreeData();
 		pagectrl.setActivePage(0);
 	}
+
 
 	protected void choiceDataPage() {
 		pagectrl.setActivePage(1);
@@ -226,7 +239,110 @@ public class ApplicationWorkspaceController {
 	}
 
 
+	private void fillTreeData() {
+		tree = ctrlHome.getTreeData();
+		// clean tree
+		if(tree.getRoot()!=null) return;
+		// root
+		tree.setRoot(new TreeItemData(new NodeData(NodeType.RootFolder,Main.getStrings().getString("HomeTreeData.root"))));
+		
+		// root folders
+		TreeItemData item;
+		List<DataSource> list;
+		TreeItemData root = (TreeItemData) tree.getRoot();
+
+		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("HomeTreeData.docs")));
+		root.getChildren().add(item);
+		list = appContext.getDocs();
+		if(list!=null) 
+			fillDataSourceBranch(list, item);
+		
+		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("HomeTreeData.ds")));
+		root.getChildren().add(item);
+		list = appContext.getDataSources();
+		if(list!=null) 
+			fillDataSourceBranch(list, item);
+		
+		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("HomeTreeData.dict")));
+		root.getChildren().add(item);
+		List<Reference> rlist = appContext.getReferences();
+		if(list!=null) 
+			fillReferenceBranch(rlist, item);
+		
+		root.setExpanded(true);
+	}
+
+	private void fillReferenceBranch(List<Reference> rlist, TreeItemData toItem) {
+		Collections.sort(rlist,new Comparator<Reference>() {
+			@Override
+			public int compare(Reference o1, Reference o2) {
+				return o1.getMetaData().getName().compareTo(o2.getMetaData().getName());
+			}
+		});
+		for (Reference ds : rlist) {
+			TreeItemData itm = new TreeItemData(new NodeData(NodeType.RefItem, ds.getMetaData().getName(),ds));
+			toItem.getChildren().add(itm);
+			fillViewBranch(ds.getViews().values(),itm);
+		}
+	}
+
+	private void fillDataSourceBranch(List<DataSource> list, TreeItemData toItem) {
+		Collections.sort(list,new Comparator<DataSource>() {
+			@Override
+			public int compare(DataSource o1, DataSource o2) {
+				return o1.getName().compareTo(o2.getName());
+			}
+		});
+		for (DataSource ds : list) {
+			TreeItemData itm = new TreeItemData(new NodeData(NodeType.DSItem, ds.getName(),ds));
+			toItem.getChildren().add(itm);
+		}
+	}
+
+	private void fillViewBranch(Collection<View> vlist, TreeItemData toItem) {
+		List<View> list = new ArrayList<>();
+		list.addAll(vlist);
+		Collections.sort(list,new Comparator<View>() {
+			@Override
+			public int compare(View o1, View o2) {
+				return o1.getTitle().compareTo(o2.getTitle());
+			}
+		});
+		for (View view : list) {
+			TreeItemData itm = new TreeItemData(new NodeData(NodeType.ViewItem, view.getTitle(),view));
+			toItem.getChildren().add(itm);
+		}
+	}
+	
+	class TreeItemData extends TreeItem<String> {
+		private NodeData nodeData;
+
+		public TreeItemData(NodeData data) {
+			super(data.text);
+			this.nodeData = data;
+		}
+
+		
+	} 
 
 
+	static public class NodeData {
+		static public enum NodeType {RootFolder, DocFolder, DSFolder, DictFolder, DSItem,RefItem,ViewItem};
+		
+		NodeType ntype;
+		String text;
+		Object data;
+
+		public NodeData(NodeType nt, String txt) {
+			this(nt,txt,null);
+		}
+		
+		public NodeData(NodeType nt, String txt, Object data) {
+			text = txt;
+			ntype = nt;
+			this.data = data;
+		}
+
+	}
 
 }

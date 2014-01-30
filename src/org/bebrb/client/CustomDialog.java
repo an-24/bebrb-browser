@@ -49,6 +49,8 @@ public class CustomDialog {
 			handlerOk = handler;
 			Pane dlg = beforeShow();
 			dlg.getChildren().add(source);
+			root.getChildren().add(maskPane);
+			root.getChildren().add(ctrlDialog.getRoot());
 			visible = true;
 		} catch (IOException e) {
 			Logger.getLogger(getClass().getName()).severe("Dialog show fault");;
@@ -60,6 +62,8 @@ public class CustomDialog {
 			handlerOk = null;
 			Pane dlg = beforeShow();
 			dlg.getChildren().add(source);
+			root.getChildren().add(maskPane);
+			root.getChildren().add(ctrlDialog.getRoot());
 			visible = true;
 		} catch (IOException e) {
 			Logger.getLogger(getClass().getName()).severe("Dialog show fault");;
@@ -68,6 +72,10 @@ public class CustomDialog {
 	
 	public void close() {
 		visible = false;
+
+		//ctrlDialog.getRoot().setDisable(true);;
+		//root.getScene().getAccelerators().remove();
+		
 		root.getChildren().remove(ctrlDialog.getRoot());
 		root.getChildren().remove(maskPane);
 		for (Node n : lockedControls) n.setDisable(false);
@@ -87,7 +95,6 @@ public class CustomDialog {
 		maskPane = new StackPane();
 		maskPane.setStyle("-fx-background-color:black;");
 		maskPane.setOpacity(0.5);
-		root.getChildren().add(maskPane);
 		AnchorPane.setLeftAnchor(maskPane, 0D);AnchorPane.setRightAnchor(maskPane, 0D);
 		AnchorPane.setTopAnchor(maskPane, 0D);AnchorPane.setBottomAnchor(maskPane, 0D);
 		//p.setPrefSize(root.getWidth(), root.getHeight());
@@ -150,9 +157,9 @@ public class CustomDialog {
 
 	
 	public interface DialogResult{
-		public boolean before();
-		public boolean handle(ButtonType btnClick);
-		public void after();
+		public boolean before(CustomDialog dialog);
+		public boolean handle(CustomDialog dialog, ButtonType btnClick);
+		public void after(CustomDialog dialog);
 	}
 
 

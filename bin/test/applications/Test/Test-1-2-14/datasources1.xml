@@ -5,7 +5,7 @@
 		xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 	<datasources>
 	  
-	  <datasource id="q2" key="trade_id" lazy="true" cache-control="IsModified">
+	  <datasource name="Торговые операции" id="q2" key="trade_id" lazy="true" cache-control="IsModified">
 		  <sql><![CDATA[
 		    	select * 
 		    	from trade
@@ -92,7 +92,7 @@
 	  	<delete ref="account.operdel"/>
 	  </reference>
 
-	  <reference id="r2" type="Hierarchy" title="Поставщики-Все" key="company_id" parentkey="company_parent_id">
+	  <reference id="r2" type="Hierarchy" title="Контрагенты" key="company_id" parentkey="company_parent_id">
 	    <attributes>
 	    	<attribute type="Integer" name="company_id" visible="false"/>
 	    	<attribute type="String" name="company_name" size="80" caption="Поставщик"/>

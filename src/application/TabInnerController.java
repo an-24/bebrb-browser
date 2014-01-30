@@ -47,6 +47,7 @@ import org.bebrb.client.Client.EmptyBodyException;
 import org.bebrb.client.Client.ExecException;
 import org.bebrb.client.Client.OnError;
 import org.bebrb.client.Client.OnResponse;
+import org.bebrb.client.CustomDialog;
 import org.bebrb.client.CustomDialog.ButtonType;
 import org.bebrb.client.CustomDialog.DialogResult;
 import org.bebrb.client.Dialog;
@@ -57,7 +58,6 @@ import org.bebrb.client.controls.SuggestBox.FilterItems;
 import org.bebrb.client.utils.DomainProperties;
 import org.bebrb.client.utils.LocalStore;
 import org.bebrb.client.utils.LocaleUtils;
-import org.bebrb.forms.menus.MenuSeparator;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandHello;
@@ -195,9 +195,10 @@ public class TabInnerController {
 				List<DomainInfo> list = new ArrayList<TabInnerController.DomainInfo>();
 				inputtext = inputtext.toLowerCase();
 				for (DomainInfo di : source) {
-					if(di.host.domain.toLowerCase().contains(inputtext) ||
-							di.host.path.toLowerCase().contains(inputtext) ||
-							di.title.toLowerCase().contains(inputtext)) {
+					if(di.host!=null)
+					if((di.host.domain!=null && di.host.domain.toLowerCase().contains(inputtext)) ||
+					   (di.host.path!=null && di.host.path.toLowerCase().contains(inputtext)) ||
+					   (di.title!=null && di.title.toLowerCase().contains(inputtext))) {
 						list.add(di);
 						if(list.size()>5)
 							return list;
@@ -521,7 +522,7 @@ public class TabInnerController {
 	public void login(final String appName) throws Exception {
 		cleanScreen(true);
 		final LoginController ctrl = Main.loadNodeController("Login.fxml");
-		final Dialog dlg = new Dialog((Pane) root.getCenter(), ctrl.getRoot());
+		Dialog dlg = new Dialog((Pane) root.getCenter(), ctrl.getRoot());
 		
 		dlg.setFirstInFocus(ctrl.getUserNameControl());
 
@@ -530,10 +531,12 @@ public class TabInnerController {
 		ctrl.getUserNameControl().setText(props.getProperty("user.name"));
 		
 		dlg.showForResult(new DialogResult() {
+			Dialog dialog;
 			@Override
-			public boolean handle(ButtonType btn) {
+			public boolean handle(CustomDialog dlg, ButtonType btn) {
+				dialog = (Dialog) dlg;
 				if (btn == ButtonType.Cancel) {
-					dlg.close();
+					dialog.close();
 					return true;
 				}
 				boolean r = ctrl.getValidateControl().action(ctrl.getRoot());
@@ -553,14 +556,14 @@ public class TabInnerController {
 													.fromJson(message,CommandLogin.Response.class);
 											if (response.getStatus() != Command.OK) {
 												Main.log.log(Level.SEVERE,response.getMessage()+ " detail:"+ response.getTrace());
-												dlg.addActionMessage(response.getMessageForUser());
+												dialog.addActionMessage(response.getMessageForUser());
 											} else {
 												Main.log.log(Level.INFO,"response:" + message);
 												//close
 												Platform.runLater(new Runnable() {
 													@Override
 													public void run() {
-														dlg.close();
+														dialog.close();
 													}
 												});
 												// handle
@@ -572,12 +575,12 @@ public class TabInnerController {
 												@Override
 												public void run() {
 													ready();
-													dlg.ready();
+													dialog.ready();
 												}
 											});
 										}
 									}
-								}, getErrorHandler(dlg));
+								}, getErrorHandler(dialog));
 						try {
 							try {
 								// save default
@@ -593,25 +596,25 @@ public class TabInnerController {
 							query = null;
 						}
 					} catch (URISyntaxException e) {
-						dlg.addActionMessage(Main.getStrings().getString(
+						dialog.addActionMessage(Main.getStrings().getString(
 								"ex-URISyntaxError"));
 					}
 				} else {
 					ready();
-					dlg.ready();
+					dialog.ready();
 				}
 				return r;
 			}
 
 			@Override
-			public boolean before() {
+			public boolean before(CustomDialog dialog) {
 				TabInnerController.this.waiting();
-				dlg.waiting();
+				((Dialog) dialog).waiting();
 				return true;
 			}
 
 			@Override
-			public void after() {
+			public void after(CustomDialog dialog) {
 			}
 		});
 	}

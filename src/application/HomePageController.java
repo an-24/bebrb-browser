@@ -16,7 +16,7 @@ public class HomePageController {
     @FXML
     private TextField tfSearch;
     @FXML
-    private TreeView<?> tvData;
+    private TreeView<String> tvData;
 
 
     @FXML
@@ -31,6 +31,16 @@ public class HomePageController {
 
 	public Pane getRoot() {
 		return root;
+	}
+
+
+	public TextField getSearchField() {
+		return tfSearch;
+	}
+
+
+	public TreeView<String> getTreeData() {
+		return tvData;
 	}
 
 }

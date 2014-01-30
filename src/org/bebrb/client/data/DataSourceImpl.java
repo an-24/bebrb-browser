@@ -23,6 +23,12 @@ public class DataSourceImpl implements DataSource {
 	}
 
 	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public List<Attribute> getAttributes() {
 		// TODO Auto-generated method stub
 		return null;
