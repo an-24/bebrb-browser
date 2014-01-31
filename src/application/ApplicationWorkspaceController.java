@@ -31,6 +31,8 @@ import application.ApplicationWorkspaceController.NodeData.NodeType;
 import application.TabInnerController.DomainInfo;
 import application.TabInnerController.Host;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -128,10 +130,11 @@ public class ApplicationWorkspaceController {
 		// home
 		ctrlHome = Main.loadNodeController("HomePage.fxml");
 		pagectrl.getPages().add(ctrlHome.getRoot());
+
+		pagectrl.getPages().add(null);
+		pagectrl.getPages().add(null);
+		pagectrl.getPages().add(null);
 		
-		pagectrl.getPages().add(null);
-		pagectrl.getPages().add(null);
-		pagectrl.getPages().add(null);
 	}
 
 
@@ -243,6 +246,7 @@ public class ApplicationWorkspaceController {
 		tree = ctrlHome.getTreeData();
 		// clean tree
 		if(tree.getRoot()!=null) return;
+		
 		// root
 		tree.setRoot(new TreeItemData(new NodeData(NodeType.RootFolder,Main.getStrings().getString("HomeTreeData.root"))));
 		

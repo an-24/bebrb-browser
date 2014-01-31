@@ -10,16 +10,16 @@
 <?import org.bebrb.client.controls.*?>
 <?scenebuilder-classpath-element ../../bin?>
 
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.TabInnerController">
+<AnchorPane id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" style="" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.TabInnerController">
   <children>
-    <BorderPane fx:id="root" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+    <BorderPane fx:id="root" prefHeight="-1.0" prefWidth="-1.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <top>
-        <HBox alignment="CENTER_LEFT" spacing="5.0" styleClass="toolbar">
+        <HBox alignment="CENTER_LEFT" minHeight="-Infinity" spacing="5.0" styleClass="toolbar">
           <children>
             <Button fx:id="btnBack" />
             <Button fx:id="btnNext" />
             <SuggestBox id="cmbBox" fx:id="comboUri" editable="true" prefWidth="349.0" promptText="введите адрес приложения" style="-fx-right:0px;" HBox.hgrow="ALWAYS" />
-            <MenuButton fx:id="btnMenu"  contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-Infinity" mnemonicParsing="false" popupSide="BOTTOM" prefHeight="-1.0" prefWidth="26.0"/>
+            <MenuButton fx:id="btnMenu" contentDisplay="GRAPHIC_ONLY" graphicTextGap="0.0" maxHeight="-1.0" maxWidth="-1.0" minHeight="-1.0" minWidth="-Infinity" mnemonicParsing="false" popupSide="BOTTOM" prefHeight="-1.0" prefWidth="26.0" />
           </children>
           <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
