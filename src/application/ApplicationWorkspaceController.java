@@ -11,6 +11,7 @@ import java.util.logging.Level;
 
 import org.bebrb.client.Client;
 import org.bebrb.client.Client.OnResponse;
+import org.bebrb.client.Host;
 import org.bebrb.client.controls.PaneControl;
 import org.bebrb.client.utils.DataFilter;
 import org.bebrb.client.utils.LocaleUtils;
@@ -27,7 +28,6 @@ import org.bebrb.server.net.CommandLogin.SessionInfo;
 import application.ApplicationWorkspaceController.NodeData.NodeType;
 import application.NavigateStack.CommandPoint;
 import application.TabInnerController.DomainInfo;
-import application.TabInnerController.Host;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
