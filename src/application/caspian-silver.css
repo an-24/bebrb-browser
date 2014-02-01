@@ -394,3 +394,16 @@
 .m-button:show-mnemonics .mnemonic-underline {
     -fx-stroke: -fx-text-fill;
 } 
+
+/*
+ * Прочие
+ */
+.tree-linkcell {
+	-fx-text-fill: blue; 
+	-fx-underline:true;
+}
+
+.tree-linkcell:focused {
+	-fx-text-fill: white; 
+}
+

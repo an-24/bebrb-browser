@@ -24,7 +24,7 @@ public class PaneControl extends AnchorPane {
 	public Pane getActivePage() {
 		return activePage;
 	}
-
+	
 	public void setActivePage(Pane activePage) {
 		if(this.activePage != activePage) {
 			if(onChange==null || (onChange!=null && onChange.change(activePage))) {

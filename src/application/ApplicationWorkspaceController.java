@@ -2,20 +2,17 @@ package application;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 
 import org.bebrb.client.Client;
 import org.bebrb.client.Client.OnResponse;
-import org.bebrb.client.MessageDialog;
-import org.bebrb.client.MessageDialog.Type;
 import org.bebrb.client.controls.PaneControl;
+import org.bebrb.client.utils.DataFilter;
 import org.bebrb.client.utils.LocaleUtils;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
@@ -28,11 +25,10 @@ import org.bebrb.server.net.CommandLogin;
 import org.bebrb.server.net.CommandLogin.SessionInfo;
 
 import application.ApplicationWorkspaceController.NodeData.NodeType;
+import application.NavigateStack.CommandPoint;
 import application.TabInnerController.DomainInfo;
 import application.TabInnerController.Host;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -44,6 +40,9 @@ import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.StrokeType;
 import javafx.util.Callback;
 
 
@@ -68,13 +67,14 @@ public class ApplicationWorkspaceController {
 	private CommandGetAppContext.Response appContext;
 
 	private PaneControl pagectrl;
-
 	private HomePageController ctrlHome;
-
 	private TreeView<String> tree;
+	private boolean defaultExpanded;
 
-
-
+	
+	private static Color clCellBlue = Color.web("blue", 0.7);
+	private static Color clCellWhite = Color.web("white", 0.36);
+	
     @FXML
     void initialize() {
 		try {
@@ -129,6 +129,44 @@ public class ApplicationWorkspaceController {
 		
 		// home
 		ctrlHome = Main.loadNodeController("HomePage.fxml");
+		ctrlHome.getSearchField().setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				filterDataSources(ctrlHome.getSearchField().getText());
+			}
+		});
+		ctrlHome.getTreeData().setCellFactory(new Callback<TreeView<String>, TreeCell<String>>() {
+            @Override
+            public TreeCell<String> call(TreeView<String> p) {
+                TreeCell<String> cell=new TreeCell<String>(){
+                	@Override
+					public void updateItem(String s, boolean empty) {
+                		super.updateItem(s, empty);
+                		setText(s!=null?s:"");
+                		if(!empty) {
+                			NodeData data = ((TreeItemData) getTreeItem()).nodeData;
+                			// icon
+                			if(data.ntype==NodeType.DSItem || data.ntype==NodeType.RefItem) {
+                				Circle circle = new Circle(4, clCellBlue);
+                	            circle.setStrokeType(StrokeType.OUTSIDE);
+                	            circle.setStroke(clCellWhite);
+                	            circle.setStrokeWidth(2);				
+                				setGraphic(circle);
+                			};
+                			//color
+                			if(data.ntype==NodeType.DSItem || data.ntype==NodeType.RefItem || data.ntype==NodeType.ViewItem) {
+                				getStyleClass().add("tree-linkcell");
+                				if(data.ntype==NodeType.ViewItem) {
+                					setStyle("-fx-padding: 3 3 3 15;");
+                				}
+                			}
+                			
+                		}
+                	}
+                };
+                return cell;
+            }
+        });
 		pagectrl.getPages().add(ctrlHome.getRoot());
 
 		pagectrl.getPages().add(null);
@@ -137,6 +175,20 @@ public class ApplicationWorkspaceController {
 		
 	}
 
+
+	private void filterDataSources(String text) {
+		tree.setRoot(null); //clean
+		defaultExpanded = !text.isEmpty();
+		final String lowtext = text.toLowerCase();
+		if(text.isEmpty()) fillTreeData();else {
+			fillTreeData(new DataFilter<ApplicationWorkspaceController.TreeItemData>() {
+				@Override
+				public boolean filter(TreeItemData record) {
+					return record.getValue().toLowerCase().contains(lowtext);
+				}
+			});
+		}
+	}
 
 	private void callGetAppContext() throws URISyntaxException {
 		btnHome.setDisable(true);
@@ -225,24 +277,37 @@ public class ApplicationWorkspaceController {
 	
 	private void choiceHome() {
 		fillTreeData();
-		pagectrl.setActivePage(0);
+		setActivePage(0);
 	}
 
-
 	protected void choiceDataPage() {
-		pagectrl.setActivePage(1);
+		setActivePage(1);
 	}
 
 	protected void choiceHistoryPage() {
-		pagectrl.setActivePage(2);
+		setActivePage(2);
 	}
 	
 	protected void choiceSettingsPage() {
-		pagectrl.setActivePage(3);
+		setActivePage(3);
 	}
 
-
-	private void fillTreeData() {
+	private void setActivePage(int idx) {
+		// push save point
+		CommandPoint savepoint = new CommandPoint() {
+			Pane backpane = pagectrl.getActivePage();
+			@Override
+			public void restore() {
+				pagectrl.setActivePage(backpane);
+			}
+		};
+		// push
+		tabController.getHistory().push(savepoint);
+		tabController.lockControl();
+		pagectrl.setActivePage(idx);
+	}
+	
+	private void fillTreeData(DataFilter<TreeItemData> filter) {
 		tree = ctrlHome.getTreeData();
 		// clean tree
 		if(tree.getRoot()!=null) return;
@@ -259,24 +324,28 @@ public class ApplicationWorkspaceController {
 		root.getChildren().add(item);
 		list = appContext.getDocs();
 		if(list!=null) 
-			fillDataSourceBranch(list, item);
+			fillDataSourceBranch(list, item, filter);
 		
 		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("HomeTreeData.ds")));
 		root.getChildren().add(item);
 		list = appContext.getDataSources();
 		if(list!=null) 
-			fillDataSourceBranch(list, item);
+			fillDataSourceBranch(list, item, filter);
 		
 		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("HomeTreeData.dict")));
 		root.getChildren().add(item);
 		List<Reference> rlist = appContext.getReferences();
 		if(list!=null) 
-			fillReferenceBranch(rlist, item);
+			fillReferenceBranch(rlist, item, filter);
 		
 		root.setExpanded(true);
 	}
 
-	private void fillReferenceBranch(List<Reference> rlist, TreeItemData toItem) {
+	private void fillTreeData() {
+		fillTreeData(null);
+	}
+
+	private void fillReferenceBranch(List<Reference> rlist, TreeItemData toItem, DataFilter<TreeItemData> filter) {
 		Collections.sort(rlist,new Comparator<Reference>() {
 			@Override
 			public int compare(Reference o1, Reference o2) {
@@ -285,12 +354,14 @@ public class ApplicationWorkspaceController {
 		});
 		for (Reference ds : rlist) {
 			TreeItemData itm = new TreeItemData(new NodeData(NodeType.RefItem, ds.getMetaData().getName(),ds));
-			toItem.getChildren().add(itm);
-			fillViewBranch(ds.getViews().values(),itm);
+			if(filter==null || filter.filter(itm)) {
+				toItem.getChildren().add(itm);
+				fillViewBranch(ds.getViews().values(),itm);
+			}
 		}
 	}
 
-	private void fillDataSourceBranch(List<DataSource> list, TreeItemData toItem) {
+	private void fillDataSourceBranch(List<DataSource> list, TreeItemData toItem, DataFilter<TreeItemData> filter) {
 		Collections.sort(list,new Comparator<DataSource>() {
 			@Override
 			public int compare(DataSource o1, DataSource o2) {
@@ -299,7 +370,9 @@ public class ApplicationWorkspaceController {
 		});
 		for (DataSource ds : list) {
 			TreeItemData itm = new TreeItemData(new NodeData(NodeType.DSItem, ds.getName(),ds));
-			toItem.getChildren().add(itm);
+			if(filter==null || filter.filter(itm)) {
+				toItem.getChildren().add(itm);
+			}
 		}
 	}
 
@@ -324,6 +397,7 @@ public class ApplicationWorkspaceController {
 		public TreeItemData(NodeData data) {
 			super(data.text);
 			this.nodeData = data;
+			setExpanded(defaultExpanded);
 		}
 
 		

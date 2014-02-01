@@ -93,6 +93,7 @@ public class TabInnerController {
 			return null;
 		}
 	});
+	
 	private DomainInfo currentLocation = null;
 	private int waitCount;
 
@@ -815,9 +816,11 @@ public class TabInnerController {
 	}
 
 	public void reset() {
-		comboUri.setValue(null);
-		setLocation(null);
-		setWelcomePage();
+		if(appWorkspace==null) {
+			comboUri.setValue(null);
+			setLocation(null);
+			setWelcomePage();
+		}
 	}
 
 	static public class Host {
@@ -881,5 +884,9 @@ public class TabInnerController {
 		callLogout(appWorkspace.getHost());
 		comboUri.setDisable(false);
 		appWorkspace = null;
+	}
+
+	public NavigateStack getHistory() {
+		return navStack;
 	}
 }
