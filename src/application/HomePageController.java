@@ -26,6 +26,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -73,8 +75,13 @@ public class HomePageController {
 					public void updateItem(String s, boolean empty) {
                 		super.updateItem(s, empty);
                 		setText(s!=null?s:"");
+                		setGraphic(null);
                 		if(!empty) {
                 			final NodeData data = ((TreeItemData) getTreeItem()).nodeData;
+                			
+                			if(data.ntype==NodeType.DocFolder) {
+                				setGraphic(new ImageView(new Image("application/images/documents.png")));
+                			}
                 			// icon
                 			if(data.ntype==NodeType.DSItem || data.ntype==NodeType.RefItem) {
                 				Circle circle = new Circle(4, clCellBlue);
@@ -195,13 +202,13 @@ public class HomePageController {
 		if(list!=null) 
 			fillDataSourceBranch(list, item, filter);
 		
-		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("homeTreeData.ds")));
+		item = new TreeItemData(new NodeData(NodeType.DSFolder, Main.getStrings().getString("homeTreeData.ds")));
 		root.getChildren().add(item);
 		list = appController.getAppContext().getDataSources();
 		if(list!=null) 
 			fillDataSourceBranch(list, item, filter);
 		
-		item = new TreeItemData(new NodeData(NodeType.DocFolder, Main.getStrings().getString("homeTreeData.dict")));
+		item = new TreeItemData(new NodeData(NodeType.DictFolder, Main.getStrings().getString("homeTreeData.dict")));
 		root.getChildren().add(item);
 		List<Reference> rlist = appController.getAppContext().getReferences();
 		if(list!=null) 

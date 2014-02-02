@@ -5,6 +5,13 @@ public class Host {
 	public final String domain;
 	public final int port;
 	public final String path;
+	
+	public Host() {
+		this.domain = "";
+		this.port = 80;
+		this.security = true;
+		this.path = "";
+	}
 
 	public Host(String domain, int port, boolean security, String path) {
 		this.domain = domain;
