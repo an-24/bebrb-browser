@@ -1,25 +1,22 @@
 package application;
 	
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.bebrb.client.Client.OnError;
-import org.bebrb.client.utils.DomainProperties;
-import org.bebrb.client.utils.UTF8Control;
-
 import javafx.application.Application;
-import javafx.stage.Stage;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
-import javafx.fxml.FXMLLoader;
+import javafx.stage.Stage;
+
+import org.bebrb.client.utils.DomainProperties;
+import org.bebrb.client.utils.Resources;
+import org.bebrb.client.utils.UTF8Control;
 
 
 public class Main extends Application {
@@ -51,13 +48,13 @@ public class Main extends Application {
 	public static void main(String[] args) {
 		//TODO read locale in settings
 		primaryThread = Thread.currentThread();
-		resStrings = ResourceBundle.getBundle("bundles.strings", locale,new UTF8Control());
+		resStrings = Resources.getBungles();
 		launch(args);
 	}
 	
 	public static Parent loadNode(String name) {
 		try {
-			return FXMLLoader.load(Main.class.getResource(name),resStrings);
+			return FXMLLoader.load(Main.class.getResource("fxml/"+name),resStrings);
 		} catch (IOException e) {
 			log.log(Level.SEVERE, e.getMessage(), e);
 		}
@@ -71,7 +68,7 @@ public class Main extends Application {
 	} 
 	
 	public static FXMLLoader getLoader(String name) {
-		return new FXMLLoader(Main.class.getResource(name),resStrings);
+		return new FXMLLoader(Main.class.getResource("fxml/"+name),resStrings);
 	}
 
 	public static ResourceBundle getStrings() {

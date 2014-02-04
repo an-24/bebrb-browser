@@ -53,7 +53,7 @@ public class Ballon {
 		label.setPrefWidth(width - 20D);
 		Image image = new Image(
 				ClassLoader
-						.getSystemResourceAsStream("application/images/error-small.png"));
+						.getSystemResourceAsStream("org/bebrb/client/fxml/images/error-small.png"));
 		label.setGraphic(new ImageView(image));
 
 		AnchorPane.setLeftAnchor(label, 10D);

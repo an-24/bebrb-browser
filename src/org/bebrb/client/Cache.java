@@ -11,14 +11,13 @@ import javafx.util.Callback;
 
 import org.bebrb.client.Client.OnError;
 import org.bebrb.client.Client.OnResponse;
+import org.bebrb.client.utils.Resources;
 import org.bebrb.data.BaseDataSet.CacheControl;
 import org.bebrb.data.DataPage;
 import org.bebrb.server.data.DataSourceImpl.SortAttribute;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandOpenDataSource;
-
-import application.Main;
 
 public class Cache {
 	
@@ -51,7 +50,7 @@ public class Cache {
 								log.log(Level.SEVERE,
 										response.getMessage()+ " detail:"+ response.getTrace());
 								throw new Exception(
-										String.format(Main.getStrings().getString("ex-OnServerError"),
+										String.format(Resources.getBungles().getString("ex-OnServerError"),
 												response.getMessage()));
 							} else
 								log.log(Level.INFO,"response:" + message);

@@ -2,17 +2,18 @@ package org.bebrb.client;
 
 import java.io.IOException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
+
 import org.bebrb.client.utils.LocaleUtils;
-import application.DialogConfirmController;
-import application.DialogInfoController;
-import application.Main;
+
 
 public class MessageDialog extends CustomDialog {
 	
@@ -44,11 +45,14 @@ public class MessageDialog extends CustomDialog {
 			dlgname = "Dialog-Error.fxml";
 			break;
 		}
-		FormController ctrl = Main.loadNodeController(dlgname);
+		FXMLLoader loader = getFXLoader(dlgname);
+		loader.load();
+		FormController ctrl = loader.getController();
+		
 		try {
 			LocaleUtils.localeFields(ctrl);
 		} catch (Exception e) {
-			Main.getLogger().log(Level.SEVERE, e.getMessage(), e);
+			Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
 		}
 		switch (type) {
 		case Info:

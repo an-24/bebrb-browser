@@ -2,10 +2,12 @@ package org.bebrb.client;
 
 import java.io.IOException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -16,10 +18,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 
 import org.bebrb.client.utils.LocaleUtils;
-import org.omg.CORBA.CTX_RESTRICT_SCOPE;
-
-import application.DialogController;
-import application.Main;
 
 public class Dialog extends CustomDialog {
 	private int waitCount;
@@ -30,8 +28,8 @@ public class Dialog extends CustomDialog {
 	
 	public void addActionMessage(String message) {
 		final Label l = new Label(message);
-		final Image image = new Image(ClassLoader.getSystemResourceAsStream("application/images/error-small.png"));
-		if(Main.getFXThread()!=Thread.currentThread()) {
+		final Image image = new Image(ClassLoader.getSystemResourceAsStream("org/bebrb/client/fxml/images/error-small.png"));
+		if(!Platform.isFxApplicationThread()) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
@@ -47,7 +45,7 @@ public class Dialog extends CustomDialog {
 	}
 
 	public void clearActionMessages() {
-		if(Main.getFXThread()!=Thread.currentThread()) {
+		if(!Platform.isFxApplicationThread()) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
@@ -83,13 +81,15 @@ public class Dialog extends CustomDialog {
 	protected Node getDefaultControl() {
 		return ((DialogController) getController()).getBtnOk();
 	}
-
+	
 	protected FormController loadForm() throws IOException {
-		DialogController ctrl = Main.loadNodeController("Dialog.fxml");
+		FXMLLoader loader = getFXLoader("Dialog.fxml");
+		loader.load();
+		DialogController ctrl = loader.getController();
 		try {
 			LocaleUtils.localeFields(ctrl);
 		} catch (Exception e) {
-			Main.getLogger().log(Level.SEVERE, e.getMessage(), e);
+			Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
 		}
 		final Pane dlg = ctrl.getRoot();
 		if(source instanceof Region) {
@@ -130,7 +130,7 @@ public class Dialog extends CustomDialog {
 	
 
 	private void setProgress(final boolean b) {
-		if(Main.getFXThread()!=Thread.currentThread()) {
+		if(!Platform.isFxApplicationThread()) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {

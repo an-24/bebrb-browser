@@ -1,12 +1,14 @@
-package application;
+package org.bebrb.client;
 
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
-import org.bebrb.client.FormController;
+
 import org.bebrb.client.utils.LocaleUtils;
+
 
 public class DialogConfirmController extends FormController {
 
@@ -29,7 +31,7 @@ public class DialogConfirmController extends FormController {
 		try {
 			LocaleUtils.localeFields(this);
 		} catch (Exception e) {
-			Main.log.log(Level.SEVERE, e.getMessage(), e);
+			Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
 	

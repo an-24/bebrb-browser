@@ -23,7 +23,7 @@
               <graphic>
                 <ImageView fitHeight="32.0" fitWidth="32.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" scaleY="0.9" smooth="true">
                   <image>
-                    <Image url="@images/add.png" />
+                    <Image url="@../images/add.png" />
                   </image>
                 </ImageView>
               </graphic>
@@ -32,7 +32,7 @@
               <graphic>
                 <ImageView fitHeight="32.0" fitWidth="32.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" rotate="0.0" scaleY="0.9" x="0.0">
                   <image>
-                    <Image url="@images/edit.png" />
+                    <Image url="@../images/edit.png" />
                   </image>
                 </ImageView>
               </graphic>
@@ -41,7 +41,7 @@
               <graphic>
                 <ImageView fitHeight="32.0" fitWidth="32.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" scaleY="0.8">
                   <image>
-                    <Image url="@images/delete.png" />
+                    <Image url="@../images/delete.png" />
                   </image>
                 </ImageView>
               </graphic>
@@ -50,7 +50,7 @@
               <graphic>
                 <ImageView fitHeight="32.0" fitWidth="32.0" mouseTransparent="true" pickOnBounds="true" preserveRatio="true" scaleX="1.0" scaleY="0.7">
                   <image>
-                    <Image url="@images/more.png" />
+                    <Image url="@../images/more.png" />
                   </image>
                 </ImageView>
               </graphic>

@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bebrb.client.utils.Resources;
 import org.bebrb.data.Attribute;
 import org.bebrb.data.DataPage;
 import org.bebrb.data.DataSource;
 import org.bebrb.data.Field;
 import org.bebrb.data.Record;
 
-import application.Main;
 
 public class RecordImpl implements Record {
 
@@ -52,7 +52,7 @@ public class RecordImpl implements Record {
 		makeFields();
 		Field<?> fld = fieldsIdxByName.get(fname);
 		if(fld==null)
-			throw new Exception(String.format(Main.getStrings().getString("fieldNotFound"),fname));
+			throw new Exception(String.format(Resources.getBungles().getString("fieldNotFound"),fname));
 		return fld;
 	}
 

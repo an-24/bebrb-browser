@@ -3,13 +3,13 @@ package org.bebrb.client.controls;
 import java.util.List;
 import java.util.Map;
 
+import org.bebrb.client.utils.Resources;
 import org.bebrb.data.Attribute;
 import org.bebrb.data.BaseDataSet;
 import org.bebrb.data.DataSource;
 import org.bebrb.data.Field;
 import org.bebrb.data.Record;
 
-import application.Main;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -37,7 +37,7 @@ public class DataGrid extends TableView<Record> {
 		super();
 		check = createFirstColumn();
 		getColumns().add(check);
-		setPlaceholder(new Label(Main.getStrings().getString("tableContentNotFound")));
+		setPlaceholder(new Label(Resources.getBungles().getString("tableContentNotFound")));
 	}
 	
 	static public TableColumn<Record, Field<?>> createColumn(Attribute attr) {
@@ -93,9 +93,9 @@ public class DataGrid extends TableView<Record> {
 		menu.setMinHeight(CHECK_COLUMN_SIZE-8);
 		menu.setAlignment(Pos.CENTER);
 		menu.setStyle("-fx-background-color: transparent;");
-		menu.getItems().addAll(new MenuItem(Main.getStrings().getString("grid-menu-1")),
-				new MenuItem(Main.getStrings().getString("grid-menu-2")), 
-				new MenuItem(Main.getStrings().getString("grid-menu-3")));
+		menu.getItems().addAll(new MenuItem(Resources.getBungles().getString("grid-menu-1")),
+				new MenuItem(Resources.getBungles().getString("grid-menu-2")), 
+				new MenuItem(Resources.getBungles().getString("grid-menu-3")));
 		menu.getItems().get(0).setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent action) {

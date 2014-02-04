@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.paint.*?>
 
-<VBox fx:id="root" layoutX="0.0" layoutY="0.0" maxWidth="400.0" minHeight="-1.0" minWidth="300.0" prefHeight="-1.0" prefWidth="-1.0" spacing="5.0" styleClass="dialogbox" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.DialogInfoController">
+<VBox fx:id="root" layoutX="0.0" layoutY="0.0" maxWidth="400.0" minHeight="-1.0" minWidth="300.0" prefHeight="-1.0" prefWidth="-1.0" spacing="5.0" styleClass="dialogbox" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="org.bebrb.client.DialogInfoController">
   <children>
     <HBox alignment="CENTER_RIGHT" spacing="5.0" style="-fx-background-color: transparent;">
       <Button fx:id="btnOk" defaultButton="true" mnemonicParsing="false" text="Ok" />

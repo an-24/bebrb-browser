@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.bebrb.client.utils.Resources;
+
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.AnchorPane;
@@ -30,6 +33,11 @@ public class CustomDialog {
 		this.root = root;
 		this.source = source;
 	}
+	
+	protected FXMLLoader getFXLoader(String name) {
+		return new FXMLLoader(Dialog.class.getResource("fxml/"+name),Resources.getBungles());
+	}
+
 
 	public boolean isVisible() {
 		return visible;
