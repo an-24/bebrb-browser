@@ -821,6 +821,8 @@ public class TabInnerController {
 			comboUri.setValue(null);
 			setLocation(null);
 			setWelcomePage();
+		} else {
+			appWorkspace.choiceDefault();
 		}
 	}
 

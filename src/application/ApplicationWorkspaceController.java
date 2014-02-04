@@ -17,12 +17,15 @@ import javafx.scene.layout.Pane;
 import org.bebrb.client.Client;
 import org.bebrb.client.Client.OnResponse;
 import org.bebrb.client.Host;
+import org.bebrb.client.MessageDialog;
 import org.bebrb.client.controls.PaneControl;
 import org.bebrb.client.utils.LocaleUtils;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandGetAppContext;
+import org.bebrb.server.net.CommandGetAppContext.DataSource;
 import org.bebrb.server.net.CommandGetAppContext.Response;
+import org.bebrb.server.net.CommandGetAppContext.View;
 import org.bebrb.server.net.CommandLogin;
 import org.bebrb.server.net.CommandLogin.SessionInfo;
 
@@ -31,7 +34,7 @@ import application.TabInnerController.DomainInfo;
 
 
 public class ApplicationWorkspaceController {
-    @FXML
+	@FXML
     private BorderPane root;
     @FXML
     private Button btnHome;
@@ -53,6 +56,11 @@ public class ApplicationWorkspaceController {
 	private PaneControl pagectrl;
 	private HomePageController ctrlHome;
 	private DataSourcePageController ctrlDataSource;
+	
+	private DataSource activeDataSource = null;
+	private View activeReferenceBook = null;
+
+	private int lockHistory = 0;
 	
     @FXML
     void initialize() {
@@ -88,7 +96,7 @@ public class ApplicationWorkspaceController {
 		});
     }
 
-	public Node getRoot() {
+	public Pane getRoot() {
 		return root;
 	}
 
@@ -203,13 +211,22 @@ public class ApplicationWorkspaceController {
 		AnchorPane.setLeftAnchor(root,0D);
 		AnchorPane.setRightAnchor(root,0D);
 	}
+
+	protected void choiceDefault() {
+		pagectrl.setActivePage(-1);
+		activeDataSource = null;
+		activeReferenceBook = null;
+	}
 	
-	private void choiceHome() {
+	protected void choiceHome() {
 		ctrlHome.fillTreeData();
 		setActivePage(0);
 	}
-
+	
 	protected void choiceDataPage() {
+		if(isAccessDataSet()) 
+			pagectrl.getPages().set(1, ctrlDataSource.getRoot());else
+			pagectrl.getPages().set(1, null);
 		setActivePage(1);
 	}
 
@@ -221,42 +238,75 @@ public class ApplicationWorkspaceController {
 		setActivePage(3);
 	}
 
+	public boolean isAccessDataSet() {
+		return (activeDataSource != null || activeReferenceBook != null); 
+	}
+
+
 	private void setActivePage(int idx) {
-		// push save point
-		CommandPoint savepoint = new CommandPoint() {
-			Pane backpane = pagectrl.getActivePage();
-			@Override
-			public void restore() {
-				pagectrl.setActivePage(backpane);
-			}
-		};
-		// push
-		tabController.getHistory().push(savepoint);
-		tabController.lockControl();
 		pagectrl.setActivePage(idx);
+		// push save point
+		if(lockHistory==0) {
+			CommandPoint savepoint = new CommandPoint() {
+				final Pane backpane = pagectrl.getActivePage();
+				final CommandGetAppContext.DataSource ds = activeDataSource;
+				final CommandGetAppContext.View ref = activeReferenceBook;
+				@Override
+				public void restore() {
+					lockHistory++;
+					pagectrl.setActivePage(backpane);
+					int idx = pagectrl.getPages().indexOf(backpane);
+					// data page
+					if(idx==1) {
+						/*
+						if(ds!=null) openDataSource(ds);else
+							if(ref!=null) openReferenceView(ref);
+						*/	
+					}
+					lockHistory--;
+				}
+			};
+			// push
+			tabController.getHistory().push(savepoint);
+		}
+		tabController.lockControl();
 	}
 
-	public void openDataSource(CommandGetAppContext.DataSource data, boolean newTab) {
-		// TODO Auto-generated method stub
-		
+	public void openDataSource(CommandGetAppContext.DataSource data, boolean newTab) throws Exception {
+		if(newTab) {
+			// TODO Auto-generated method stub
+		}
+		activeDataSource = data;
+		activeReferenceBook = null;
+		ctrlDataSource.setDataSource(data);
+		choiceDataPage();
 	}
 
-	public void openReferenceView(CommandGetAppContext.View data, boolean newTab) {
-		// TODO Auto-generated method stub
-		
+	public void openReferenceView(CommandGetAppContext.View data, boolean newTab) throws Exception{
+		if(newTab) {
+			// TODO Auto-generated method stub
+		}
+		activeDataSource = null;
+		activeReferenceBook = data;
+		ctrlDataSource.setReferenceView(data);
+		choiceDataPage();
 	}
 	
-	public void openDataSource(CommandGetAppContext.DataSource data) {
+	public void openDataSource(CommandGetAppContext.DataSource data) throws Exception {
 		openDataSource(data,false);
 	}
 
-	public void openReferenceView(CommandGetAppContext.View data) {
+	public void openReferenceView(CommandGetAppContext.View data) throws Exception {
 		openReferenceView(data,false);
 	}
 
-	public void openReferenceView(CommandGetAppContext.Reference ref, boolean newTab) {
+	public void openReferenceView(CommandGetAppContext.Reference ref, boolean newTab) throws Exception {
 		CommandGetAppContext.View view = ref.getViews().get(ref.getDefaultView());
 		openReferenceView(view,newTab);
+	}
+
+	public void showError(Exception e) {
+		new MessageDialog((Pane)root.getParent(),MessageDialog.Type.Error,e.getMessage()).show();
 	}
 
 	

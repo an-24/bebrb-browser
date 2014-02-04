@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bebrb.client.MessageDialog;
 import org.bebrb.client.utils.DataFilter;
 import org.bebrb.client.utils.LocaleUtils;
 import org.bebrb.server.net.CommandGetAppContext.DataSource;
@@ -71,7 +72,7 @@ public class HomePageController {
             @Override
             public TreeCell<String> call(TreeView<String> p) {
                 TreeCell<String> cell=new TreeCell<String>(){
-                	@Override
+					@Override
 					public void updateItem(String s, boolean empty) {
                 		super.updateItem(s, empty);
                 		setText(s!=null?s:"");
@@ -79,9 +80,20 @@ public class HomePageController {
                 		if(!empty) {
                 			final NodeData data = ((TreeItemData) getTreeItem()).nodeData;
                 			
-                			if(data.ntype==NodeType.DocFolder) {
-                				setGraphic(new ImageView(new Image("application/images/documents.png")));
-                			}
+                			switch (data.ntype) {
+								case DocFolder:
+									setGraphic(new ImageView(new Image("application/images/documents.png",26,26,false,false)));
+									break;
+								case DSFolder:
+									setGraphic(new ImageView(new Image("application/images/data.png",26,26,false,false)));
+									break;
+								case DictFolder:
+									
+									setGraphic(new ImageView(new Image("application/images/refs.png",26,26,false,false)));
+									break;
+								default:
+									break;
+							}
                 			// icon
                 			if(data.ntype==NodeType.DSItem || data.ntype==NodeType.RefItem) {
                 				Circle circle = new Circle(4, clCellBlue);
@@ -319,18 +331,23 @@ public class HomePageController {
 
 
 	public void open(final NodeData data, boolean newTab) {
-		switch (data.ntype) {
-			case DSItem:
-				appController.openDataSource((DataSource)data.data,newTab);
-				break;
-			case ViewItem:
-				appController.openReferenceView((View)data.data,newTab);
-				break;
-			case RefItem:
-				appController.openReferenceView((Reference)data.data,newTab);
-				break;
-			default:
-				break;
+		try {
+			switch (data.ntype) {
+				case DSItem:
+					appController.openDataSource((DataSource)data.data,newTab);
+					break;
+				case ViewItem:
+					appController.openReferenceView((View)data.data,newTab);
+					break;
+				case RefItem:
+					appController.openReferenceView((Reference)data.data,newTab);
+					break;
+				default:
+					break;
+			}
+		} catch (Exception e) {
+			Main.log.log(Level.SEVERE, e.getMessage(), e);
+			appController.showError(e);
 		}
 	}
 

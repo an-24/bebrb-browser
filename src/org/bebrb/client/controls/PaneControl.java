@@ -37,7 +37,10 @@ public class PaneControl extends AnchorPane {
 	}
 
 	public void setActivePage(int activePage) {
-		setActivePage(pages.get(activePage));
+		if(activePage<0) {
+			setActivePage(null);
+		} else
+			setActivePage(pages.get(activePage));
 	}
 	
 	private void update() {

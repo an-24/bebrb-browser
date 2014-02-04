@@ -1,17 +1,22 @@
 package org.bebrb.client.controls;
 
 import java.util.List;
+import java.util.Map;
 
+import org.bebrb.data.Attribute;
+import org.bebrb.data.BaseDataSet;
+import org.bebrb.data.DataSource;
+import org.bebrb.data.Field;
 import org.bebrb.data.Record;
 
 import application.Main;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
@@ -23,17 +28,25 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.util.Callback;
 
-public class DataGridFX extends TableView<Record> {
+public class DataGrid extends TableView<Record> {
 	private static final double CHECK_COLUMN_SIZE = 30;
 	private TableColumn<Record, CheckMarker> check;
+	private BaseDataSet dataSource;
 
-	public DataGridFX() {
+	public DataGrid() {
 		super();
 		check = createFirstColumn();
 		getColumns().add(check);
 		setPlaceholder(new Label(Main.getStrings().getString("tableContentNotFound")));
 	}
 	
+	static public TableColumn<Record, Field<?>> createColumn(Attribute attr) {
+		TableColumn<Record, Field<?>> col = new TableColumn<>();
+		col.setId(attr.getName());
+		col.setText(attr.getCaption());
+		// TODO Auto-generated method stub
+		return col;
+	}
 	
 	private TableColumn<Record, CheckMarker> createFirstColumn() {
 		TableColumn<Record, CheckMarker> chcol = new TableColumn<>();
@@ -148,6 +161,27 @@ public class DataGridFX extends TableView<Record> {
 		}
 		public void setMarked(boolean b) {
 			checked = b;
+		}
+	}
+
+
+	public void setDataSet(DataSource dataSource, Map<String, Object> params) throws Exception {
+		if(this.dataSource!=dataSource) {
+			this.dataSource = dataSource;
+			createFields();
+			//dataSource.open(params);
+		}
+	}
+
+	private void createFields() {
+		//clean columns
+		ObservableList<TableColumn<Record, ?>> cols = getColumns();
+		while(cols.size()>1) cols.remove(1);
+		//new column list
+		List<Attribute> attrs = ((DataSource)dataSource).getAttributes();
+		for (Attribute attr :attrs) {
+			if(attr.isVisible())
+				getColumns().add(DataGrid.createColumn(attr));
 		}
 	}
 

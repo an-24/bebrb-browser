@@ -6,12 +6,13 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
+<?import org.bebrb.client.controls.*?>
 
 <AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="-1.0" prefWidth="-1.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="application.DataSourcePageController">
   <children>
     <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
       <children>
-        <TitledPane fx:id="tpFilter" text="Filter box" textFill="BLACK" underline="false" VBox.vgrow="NEVER">
+        <TitledPane id="tpFilter" fx:id="tpHeader" text="Filter box" textFill="BLACK" underline="false" VBox.vgrow="NEVER">
           <content>
             <AnchorPane minHeight="0.0" minWidth="0.0" />
           </content>
@@ -60,13 +61,8 @@
             </MenuButton>
           </items>
         </ToolBar>
-        <TableView id="tData" fx:id="tvData" VBox.vgrow="ALWAYS">
-          <columns>
-            <TableColumn prefWidth="75.0" text="Code" />
-            <TableColumn id="" prefWidth="75.0" text="Staff Id" />
-            <TableColumn prefWidth="179.0" text="Name" />
-          </columns>
-        </TableView>
+        <DataGrid id="tData" fx:id="tvData" VBox.vgrow="ALWAYS">
+        </DataGrid>
       </children>
     </VBox>
   </children>

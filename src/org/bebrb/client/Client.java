@@ -21,6 +21,7 @@ public class Client {
 	private int port;
 	private OnError error;
 	private Thread thread = null;
+	private boolean sync =  false;
 	
 	public static final NetConsole console = new NetConsole();  
 	public static final Logger log = Logger.getLogger("bebrb");
@@ -32,7 +33,8 @@ public class Client {
 		this.port = port;
 	}
 
-	public void send(final Command cmd) {
+	public boolean send(final Command cmd) {
+		boolean result = true;
 
 		thread = new Thread(new Runnable() {
 
@@ -85,6 +87,19 @@ public class Client {
 			}
 		});
 		thread.start();
+		if(sync)
+			try {
+				thread.join();
+			} catch (final InterruptedException e) {
+				result = false;
+				Platform.runLater(new Runnable() {
+					@Override
+					public void run() {
+						error.errorCame(e);
+					}
+				}); 
+			}
+		return result; 
 	}
 
 	public void interrupt() {
@@ -95,6 +110,14 @@ public class Client {
 		
 	}
 	
+	public boolean isSync() {
+		return sync;
+	}
+
+	public void setSync(boolean sync) {
+		this.sync = sync;
+	}
+
 	public interface OnResponse {
 		public void replyСame(String message) throws Exception;
 	}
