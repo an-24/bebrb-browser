@@ -7,7 +7,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.bebrb.client.MessageDialog;
 import org.bebrb.client.utils.DataFilter;
 import org.bebrb.client.utils.LocaleUtils;
 import org.bebrb.server.net.CommandGetAppContext.DataSource;
@@ -50,7 +49,7 @@ public class HomePageController {
     private boolean defaultExpanded = false;
 	private ApplicationWorkspaceController appController;
 
-	private static Color clCellBlue = Color.web("blue", 0.7);
+	private static Color clCellBlue = Color.web("gray", 0.7);
 	private static Color clCellWhite = Color.web("white", 0.36);
 
     @FXML
@@ -82,14 +81,14 @@ public class HomePageController {
                 			
                 			switch (data.ntype) {
 								case DocFolder:
-									setGraphic(new ImageView(new Image("application/images/documents.png",26,26,false,false)));
+									setGraphic(new ImageView(new Image("application/images/documents.png",26,26,false,true)));
 									break;
 								case DSFolder:
-									setGraphic(new ImageView(new Image("application/images/data.png",26,26,false,false)));
+									setGraphic(new ImageView(new Image("application/images/data.png",26,26,false,true)));
 									break;
 								case DictFolder:
 									
-									setGraphic(new ImageView(new Image("application/images/refs.png",26,26,false,false)));
+									setGraphic(new ImageView(new Image("application/images/refs.png",26,26,false,true)));
 									break;
 								default:
 									break;

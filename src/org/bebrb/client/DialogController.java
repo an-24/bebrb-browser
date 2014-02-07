@@ -1,7 +1,6 @@
 package org.bebrb.client;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.bebrb.client.utils.LocaleUtils;
 
@@ -30,7 +29,7 @@ public class DialogController extends FormController {
 		try {
 			LocaleUtils.localeFields(this);
 		} catch (Exception e) {
-			Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
+			org.bebrb.client.utils.Logger.getLogger().log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
 

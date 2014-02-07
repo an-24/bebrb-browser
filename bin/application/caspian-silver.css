@@ -399,7 +399,7 @@
  * Прочие
  */
 .tree-linkcell {
-	-fx-text-fill: blue; 
+	-fx-text-fill: -fx-accent; 
 	-fx-underline:true;
 }
 

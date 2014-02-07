@@ -1,6 +1,7 @@
 package org.bebrb.client.data;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -9,7 +10,10 @@ import javafx.util.Callback;
 import org.bebrb.client.Cache;
 import org.bebrb.client.Cache.Cursor;
 import org.bebrb.client.Client;
+import org.bebrb.client.Client.EmptyBodyException;
 import org.bebrb.client.Host;
+import org.bebrb.client.controls.ControlLink;
+import org.bebrb.client.controls.DataSourceLink;
 import org.bebrb.data.Attribute;
 import org.bebrb.data.DataPage;
 import org.bebrb.data.DataSource;
@@ -21,7 +25,7 @@ import org.bebrb.server.net.CommandOpenDataSource;
 import org.bebrb.server.net.CommandOpenDataSource.Page;
 import org.bebrb.server.net.CommandOpenDataSource.Response;
 
-public class DataSourceImpl extends BaseDataSetImpl implements DataSource {
+public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataSourceLink {
 	private boolean lazy;
 	private boolean readonly;
 	private boolean canEdit;
@@ -33,6 +37,8 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource {
 	private Cursor cursor;
 	private Host host;
 	private Client currentQuery;
+	private boolean active;
+	private HashSet<ControlLink> linkControls = new HashSet<>();
 
 	public static DataSource createDataSet(Host host,String sessionId,CommandGetAppContext.DataSource ds) {
 		return new DataSourceImpl(host,sessionId,ds);
@@ -103,42 +109,23 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource {
 
 	@Override
 	public void open(Map<String, Object> params, final OnOpen callback) {
+		if(active) return;
+		
 		cursor = null;
 		
 		Callback<Response, Void> openHandler = new Callback<CommandOpenDataSource.Response, Void>() {
 			@Override
-			public Void call(Response r) {
+			public Void call(CommandOpenDataSource.Response r) {
 				List<Page> sourcePages = r.getPages();
 				List<DataPage> pages =  new ArrayList<>(sourcePages.size());
-				//TODO  r.getPages()->pages
 				for (final Page page : sourcePages) {
-					DataPage dp = new DataPage(){
-						Page sourcePage = page;
-						@Override
-						public int getSize() {
-							return sourcePage.getSize();
-						}
-
-						@Override
-						public List<Record> getRecords() throws Exception {
-							// TODO Auto-generated method stub
-							return null;
-						}
-
-						@Override
-						public boolean isEof() throws Exception {
-							return sourcePage.getEof();
-						}
-
-						@Override
-						public boolean isAlive() {
-							return sourcePage.getAlive();
-						}
-						
-					};
+					DataPage dp = new DataPageImpl(page,DataSourceImpl.this);
 					pages.add(dp);
 				}
 				cursor = new Cursor(r.getCursorId(),getCacheControl(),pages);
+				active = true;
+				// notify controls
+				for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, true); 
 				callback.onAfterOpen();
 				return null;
 			}
@@ -163,6 +150,22 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource {
 		if(currentQuery!=null)
 			currentQuery.interrupt();
 	}
+
+	@Override
+	public void close() {
+		if(!active) return;
+		active = false;
+		// notify controls
+		for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, false); 
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isOpen() {
+		return active;
+	}
+
 
 	@Override
 	public Record findRecord(Object value, boolean onServer) throws Exception {
@@ -253,6 +256,22 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource {
 
 	public Cursor getCursor() {
 		return cursor;
+	}
+
+	@Override
+	public void registerControl(ControlLink control) {
+		this.linkControls.add(control);
+	}
+
+	@Override
+	public void unRegisterControl(ControlLink control) {
+		this.linkControls.remove(control);
+	}
+
+	@Override
+	public int getRecordCount() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 

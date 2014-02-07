@@ -25,8 +25,9 @@ public class DataPageImpl implements DataPage {
 	@Override
 	public List<Record> getRecords() throws Exception {
 		if(records==null) {
-			records = new ArrayList<>(page.getData().size());
-			for (List<Object> values : page.getData()) {
+			List<List<Object>> data = page.getData();
+			records = new ArrayList<>(data.size());
+			for (List<Object> values : data) {
 				RecordImpl r = new RecordImpl(this,values);
 				records.add(r);
 			}

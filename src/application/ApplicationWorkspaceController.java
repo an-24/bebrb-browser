@@ -8,7 +8,6 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -255,14 +254,6 @@ public class ApplicationWorkspaceController {
 				public void restore() {
 					lockHistory++;
 					pagectrl.setActivePage(backpane);
-					int idx = pagectrl.getPages().indexOf(backpane);
-					// data page
-					if(idx==1) {
-						/*
-						if(ds!=null) openDataSource(ds);else
-							if(ref!=null) openReferenceView(ref);
-						*/	
-					}
 					lockHistory--;
 				}
 			};
@@ -309,5 +300,8 @@ public class ApplicationWorkspaceController {
 		new MessageDialog((Pane)root.getParent(),MessageDialog.Type.Error,e.getMessage()).show();
 	}
 
+	public void showError(String message) {
+		new MessageDialog((Pane)root.getParent(),MessageDialog.Type.Error,message).show();
+	}
 	
 }

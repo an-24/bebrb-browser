@@ -1,10 +1,7 @@
 package org.bebrb.client;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.bebrb.client.utils.LocaleUtils;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
@@ -25,7 +22,7 @@ public class DialogInfoController extends FormController {
 			try {
 				LocaleUtils.localeFields(this);
 			} catch (Exception e) {
-				Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
+				org.bebrb.client.utils.Logger.getLogger().log(Level.SEVERE, e.getMessage(), e);
 			}
 		}
 

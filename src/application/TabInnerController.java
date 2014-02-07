@@ -375,7 +375,7 @@ public class TabInnerController {
 	}
 
 	private void setProgress(final boolean b) {
-		if(Main.getFXThread()!=Thread.currentThread()) {
+		if(!Platform.isFxApplicationThread()) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {

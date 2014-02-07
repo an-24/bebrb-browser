@@ -3,7 +3,6 @@ package org.bebrb.client;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.bebrb.client.utils.Resources;
 
@@ -61,7 +60,7 @@ public class CustomDialog {
 			root.getChildren().add(ctrlDialog.getRoot());
 			visible = true;
 		} catch (IOException e) {
-			Logger.getLogger(getClass().getName()).severe("Dialog show fault");;
+			org.bebrb.client.utils.Logger.getLogger().severe("Dialog show fault");;
 		}
 	}
 
@@ -74,7 +73,7 @@ public class CustomDialog {
 			root.getChildren().add(ctrlDialog.getRoot());
 			visible = true;
 		} catch (IOException e) {
-			Logger.getLogger(getClass().getName()).severe("Dialog show fault");;
+			org.bebrb.client.utils.Logger.getLogger().severe("Dialog show fault");;
 		}
 	}
 	

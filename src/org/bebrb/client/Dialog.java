@@ -89,7 +89,7 @@ public class Dialog extends CustomDialog {
 		try {
 			LocaleUtils.localeFields(ctrl);
 		} catch (Exception e) {
-			Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
+			org.bebrb.client.utils.Logger.getLogger().log(Level.SEVERE, e.getMessage(), e);
 		}
 		final Pane dlg = ctrl.getRoot();
 		if(source instanceof Region) {

@@ -2,7 +2,6 @@ package org.bebrb.client;
 
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -52,7 +51,7 @@ public class MessageDialog extends CustomDialog {
 		try {
 			LocaleUtils.localeFields(ctrl);
 		} catch (Exception e) {
-			Logger.getLogger("bebrb").log(Level.SEVERE, e.getMessage(), e);
+			org.bebrb.client.utils.Logger.getLogger().log(Level.SEVERE, e.getMessage(), e);
 		}
 		switch (type) {
 		case Info:

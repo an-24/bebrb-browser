@@ -24,7 +24,7 @@ public class Client {
 	private boolean sync =  false;
 	
 	public static final NetConsole console = new NetConsole();  
-	public static final Logger log = Logger.getLogger("bebrb");
+	public static final Logger log = org.bebrb.client.utils.Logger.getLogger();
 
 	public Client(String host, int port, OnResponse response, OnError error) {
 		this.response = response;

@@ -18,10 +18,11 @@ import org.bebrb.server.data.DataSourceImpl.SortAttribute;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
 import org.bebrb.server.net.CommandOpenDataSource;
+import org.bebrb.server.net.CommandOpenReferenceView;
 
 public class Cache {
 	
-	static private Logger log = Logger.getLogger("bebrb"); 
+	static private Logger log = org.bebrb.client.utils.Logger.getLogger(); 
 
 	public static Client openDirect(Host currentHost, String sessionId, String id,
 			Map<String, Object> params, int maxSizeDataPage,
@@ -29,43 +30,46 @@ public class Cache {
 			final Callback<CommandOpenDataSource.Response, Void> handler,
 			final Callback<Exception,Void> errhandler) {
 		
-		String[] cid = id.split(".");
-		Client query;
+		String[] cid = id.split("\\.");
+
+		Client query = new Client(currentHost.domain, currentHost.port,
+				new OnResponse() {
+					@Override
+					public void replyСame(String message) throws Exception {
+						// parse
+						CommandOpenDataSource.Response response = CommandFactory
+								.createGson()
+								.fromJson(message,CommandOpenDataSource.Response.class);
+						if (response.getStatus() != Command.OK) {
+							log.log(Level.SEVERE,
+									response.getMessage()+ " detail:"+ response.getTrace());
+							throw new Exception(
+									String.format(Resources.getBungles().getString("ex-OnServerError"),
+											response.getMessageForUser()));
+						} else
+							log.log(Level.INFO,"response:" + message);
+						handler.call(response);
+					}
+			
+		}, new OnError() {
+			@Override
+			public void errorCame(Exception ex) {
+				errhandler.call(ex);
+			}
+			
+		});
+		Command cmd;
 		// reference book
 		if(cid.length>1) {
-			query = null;
+			cmd = new CommandOpenReferenceView(sessionId,cid[0],cid[1],params);
+			((CommandOpenReferenceView)cmd).setPageSize(maxSizeDataPage);
+			((CommandOpenReferenceView)cmd).setSorting(sorting);
 		} else {
-			CommandOpenDataSource cmd = new CommandOpenDataSource(sessionId,id, params);
-			cmd.setPageSize(maxSizeDataPage);
-			cmd.setSorting(sorting);
-			query = new Client(currentHost.domain, currentHost.port,
-					new OnResponse() {
-						@Override
-						public void replyСame(String message) throws Exception {
-							// parse
-							CommandOpenDataSource.Response response = CommandFactory
-									.createGson()
-									.fromJson(message,CommandOpenDataSource.Response.class);
-							if (response.getStatus() != Command.OK) {
-								log.log(Level.SEVERE,
-										response.getMessage()+ " detail:"+ response.getTrace());
-								throw new Exception(
-										String.format(Resources.getBungles().getString("ex-OnServerError"),
-												response.getMessage()));
-							} else
-								log.log(Level.INFO,"response:" + message);
-							handler.call(response);
-						}
-				
-			}, new OnError() {
-				@Override
-				public void errorCame(Exception ex) {
-					errhandler.call(ex);
-				}
-				
-			});
-			query.send(cmd);
+			cmd = new CommandOpenDataSource(sessionId,id, params);
+			((CommandOpenDataSource)cmd).setPageSize(maxSizeDataPage);
+			((CommandOpenDataSource)cmd).setSorting(sorting);
 		};
+		query.send(cmd);
 		return query;
 	}
 

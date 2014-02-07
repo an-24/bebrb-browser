@@ -31,7 +31,7 @@ public abstract class BaseDataSetImpl implements BaseDataSet {
 	}
 
 	protected BaseDataSetImpl(CommandGetAppContext.View ds) {
-		this.id = ds.getReferenceBook().getMetaData().getName()+"."+ds.getName();
+		this.id = ds.getReferenceBook().getMetaData().getId()+"."+ds.getName();
 		this.name = ds.getTitle();
 		List<CommandGetAppContext.Attribute> attrs = ds.getReferenceBook().getMetaData().getAttributes();
 		for (CommandGetAppContext.Attribute a : attrs) {

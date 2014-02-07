@@ -16,7 +16,6 @@ import javafx.stage.Stage;
 
 import org.bebrb.client.utils.DomainProperties;
 import org.bebrb.client.utils.Resources;
-import org.bebrb.client.utils.UTF8Control;
 
 
 public class Main extends Application {
@@ -27,8 +26,7 @@ public class Main extends Application {
 	
 	static Locale locale = Locale.getDefault();
 	static ResourceBundle resStrings;
-	static Logger log = Logger.getLogger("bebrb");
-	private static Thread primaryThread;
+	static Logger log = org.bebrb.client.utils.Logger.getLogger();
 	
 	@Override
 	public void start(Stage primaryStage) {
@@ -47,7 +45,6 @@ public class Main extends Application {
 	
 	public static void main(String[] args) {
 		//TODO read locale in settings
-		primaryThread = Thread.currentThread();
 		resStrings = Resources.getBungles();
 		launch(args);
 	}
@@ -79,9 +76,6 @@ public class Main extends Application {
 		return log;
 	}
 
-	public static Thread getFXThread() {
-		return primaryThread;
-	}
 	
 	public static DomainProperties getDomainProperties(String domain) throws FileNotFoundException, IOException {
 		return new DomainProperties(domain);

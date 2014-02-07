@@ -1,18 +1,21 @@
 package org.bebrb.client.controls;
 
+import java.util.AbstractList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.bebrb.client.utils.Resources;
 import org.bebrb.data.Attribute;
-import org.bebrb.data.BaseDataSet;
 import org.bebrb.data.DataSource;
 import org.bebrb.data.Field;
 import org.bebrb.data.Record;
 
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -28,10 +31,10 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.util.Callback;
 
-public class DataGrid extends TableView<Record> {
+public class DataGrid extends TableView<Record> implements ControlLink {
 	private static final double CHECK_COLUMN_SIZE = 30;
 	private TableColumn<Record, CheckMarker> check;
-	private BaseDataSet dataSource;
+	private DataSource dataSource;
 
 	public DataGrid() {
 		super();
@@ -165,18 +168,78 @@ public class DataGrid extends TableView<Record> {
 	}
 
 
-	public void setDataSet(DataSource dataSource, Map<String, Object> params) throws Exception {
-		if(this.dataSource!=dataSource) {
-			this.dataSource = dataSource;
-			createFields();
-			//dataSource.open(params);
+	public void setDataSet(DataSource ds) {
+		if(this.dataSource!=ds) {
+
+			clearLayout();
+			
+			if(dataSource!=null && dataSource instanceof DataSourceLink)
+				((DataSourceLink)this.dataSource).unRegisterControl(this);
+
+			this.dataSource = ds;
+			setItems(new RecordList());
+			
+			if(dataSource!=null  && dataSource instanceof DataSourceLink)
+				((DataSourceLink)this.dataSource).registerControl(this);
+			
+			
+			if(dataSource!=null && dataSource.isOpen()) {
+				buildLayout();	
+			}
 		}
 	}
 
-	private void createFields() {
+	public DataSource getDataSet() {
+		return this.dataSource;
+	}
+
+	private void buildLayout() {
+		if(!Platform.isFxApplicationThread()) {
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					createFields();
+					fillData();
+				}
+			});
+		} else {
+			createFields();
+			fillData();
+		}
+	}
+
+	private void clearLayout() {
+		if(!Platform.isFxApplicationThread()) {
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					clearData();
+					clearFields();
+				}
+			});
+		} else {
+			clearData();
+			clearFields();
+		}
+	}
+
+	private void fillData() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void clearData() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private void clearFields() {
 		//clean columns
 		ObservableList<TableColumn<Record, ?>> cols = getColumns();
 		while(cols.size()>1) cols.remove(1);
+	}
+
+	private void createFields() {
 		//new column list
 		List<Attribute> attrs = ((DataSource)dataSource).getAttributes();
 		for (Attribute attr :attrs) {
@@ -185,4 +248,76 @@ public class DataGrid extends TableView<Record> {
 		}
 	}
 
+	@Override
+	public void linkActive(DataSourceLink dsl, boolean active) {
+		if(active) {
+			buildLayout();	
+		} else {
+			clearLayout();
+		}
+	}
+
+
+
+	class RecordList extends AbstractList<Record> implements ObservableList<Record> {
+
+		@Override
+		public void addListener(InvalidationListener arg0) {
+		}
+
+		@Override
+		public void removeListener(InvalidationListener arg0) {
+		}
+
+		@Override
+		public void removeListener(ListChangeListener<? super Record> arg0) {
+		}
+
+		@Override
+		public void addListener(ListChangeListener<? super Record> arg0) {
+		}
+		
+		@Override
+		public boolean addAll(Record... arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+
+		@Override
+		public void remove(int arg0, int arg1) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean removeAll(Record... arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean retainAll(Record... arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean setAll(Record... arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean setAll(Collection<? extends Record> arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Record get(int idx) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public int size() {
+			return ((DataSourceLink)dataSource).getRecordCount();
+		}
+		
+	}
 }

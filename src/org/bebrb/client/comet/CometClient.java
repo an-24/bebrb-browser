@@ -14,7 +14,7 @@ public class CometClient {
 	private CometListener listiner;
 	private Host host;
 	private Thread thread;
-	private Logger log = Logger.getLogger("bebrb");
+	private Logger log = org.bebrb.client.utils.Logger.getLogger();
 
 	public CometClient(Host host, CometListener listiner) {
 		this.listiner = listiner;
