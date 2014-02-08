@@ -11,6 +11,7 @@ public class DataPageImpl implements DataPage {
 	private CommandOpenDataSource.Page page;
 	private List<Record> records;
 	private DataSourceImpl dataSource;
+	private boolean request;
 	
 	public DataPageImpl(CommandOpenDataSource.Page page, DataSourceImpl ds) {
 		this.page = page;
@@ -23,7 +24,7 @@ public class DataPageImpl implements DataPage {
 	}
 
 	@Override
-	public List<Record> getRecords() throws Exception {
+	public List<Record> getRecords() {
 		if(records==null) {
 			List<List<Object>> data = page.getData();
 			records = new ArrayList<>(data.size());
@@ -48,6 +49,15 @@ public class DataPageImpl implements DataPage {
 
 	public DataSourceImpl getDataSource() {
 		return dataSource;
+	}
+
+	public void requestPageData() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public boolean isRequest() {
+		return request;
 	}
 
 }

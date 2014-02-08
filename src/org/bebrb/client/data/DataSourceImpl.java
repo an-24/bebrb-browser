@@ -10,7 +10,6 @@ import javafx.util.Callback;
 import org.bebrb.client.Cache;
 import org.bebrb.client.Cache.Cursor;
 import org.bebrb.client.Client;
-import org.bebrb.client.Client.EmptyBodyException;
 import org.bebrb.client.Host;
 import org.bebrb.client.controls.ControlLink;
 import org.bebrb.client.controls.DataSourceLink;
@@ -122,7 +121,7 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 					DataPage dp = new DataPageImpl(page,DataSourceImpl.this);
 					pages.add(dp);
 				}
-				cursor = new Cursor(r.getCursorId(),getCacheControl(),pages);
+				cursor = new Cursor(r.getCursorId(),getCacheControl(),pages,r.getRecordCount());
 				active = true;
 				// notify controls
 				for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, true); 
@@ -270,8 +269,7 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 
 	@Override
 	public int getRecordCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return cursor.getRecordCount();
 	}
 
 

@@ -98,12 +98,14 @@ public class Cache {
 		private BigInteger cursorId;
 		private List<DataPage> dataPages;
 		private CacheControl cacheControl;
+		private int recordCount;
 		
 		public Cursor(BigInteger id, CacheControl cc,
-				List<DataPage> pages) {
+				List<DataPage> pages, int allCount) {
 			cursorId = id;
 			cacheControl = cc;
 			dataPages = pages;
+			recordCount = allCount;
 		}
 		
 		public BigInteger getCursorId() {
@@ -115,6 +117,10 @@ public class Cache {
 
 		public CacheControl getCacheControl() {
 			return cacheControl;
+		}
+
+		public int getRecordCount() {
+			return recordCount;
 		}
 
 	}

@@ -4,8 +4,13 @@ import java.util.AbstractList;
 import java.util.Collection;
 import java.util.List;
 
+import org.bebrb.client.Cache.Cursor;
+import org.bebrb.client.data.DataPageImpl;
+import org.bebrb.client.data.DataSourceImpl;
+import org.bebrb.client.data.RecordImpl;
 import org.bebrb.client.utils.Resources;
 import org.bebrb.data.Attribute;
+import org.bebrb.data.DataPage;
 import org.bebrb.data.DataSource;
 import org.bebrb.data.Field;
 import org.bebrb.data.Record;
@@ -177,7 +182,6 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 				((DataSourceLink)this.dataSource).unRegisterControl(this);
 
 			this.dataSource = ds;
-			setItems(new RecordList());
 			
 			if(dataSource!=null  && dataSource instanceof DataSourceLink)
 				((DataSourceLink)this.dataSource).registerControl(this);
@@ -224,8 +228,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	}
 
 	private void fillData() {
-		// TODO Auto-generated method stub
-		
+		setItems(new RecordList());
 	}
 
 	private void clearData() {
@@ -260,6 +263,9 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 
 
 	class RecordList extends AbstractList<Record> implements ObservableList<Record> {
+		private int pageSize = dataSource.getMaxSizeDataPage();
+		private Cursor cursor = ((DataSourceImpl) dataSource).getCursor();
+		private List<DataPage> pages = cursor.getDataPages();
 
 		@Override
 		public void addListener(InvalidationListener arg0) {
@@ -310,14 +316,25 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 
 		@Override
 		public Record get(int idx) {
-			// TODO Auto-generated method stub
-			return null;
+			DataPage page = pages.get(idx/pageSize);
+			if(!page.isAlive()) {
+				DataPageImpl dp = ((DataPageImpl)page);
+				if(!dp.isRequest()) dp.requestPageData();
+				return new RecordZero(dp);
+			} else
+			return page.getRecords().get(idx%pageSize);
 		}
 
 		@Override
 		public int size() {
 			return ((DataSourceLink)dataSource).getRecordCount();
 		}
+		
+	}
+
+
+	public void requestPageData(DataPage page) {
+		// TODO Auto-generated method stub
 		
 	}
 }
