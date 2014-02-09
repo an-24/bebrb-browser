@@ -3,8 +3,14 @@ package org.bebrb.client.data;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.util.Callback;
+
+import org.bebrb.client.Cache;
+import org.bebrb.client.Host;
 import org.bebrb.data.DataPage;
 import org.bebrb.data.Record;
+import org.bebrb.server.net.CommandGetRecords;
+import org.bebrb.server.net.CommandGetRecords.Response;
 import org.bebrb.server.net.CommandOpenDataSource;
 
 public class DataPageImpl implements DataPage {
@@ -12,8 +18,11 @@ public class DataPageImpl implements DataPage {
 	private List<Record> records;
 	private DataSourceImpl dataSource;
 	private boolean request;
+	private int pageIndex;
+	private Callback<Exception, Void> errorHandler;
 	
-	public DataPageImpl(CommandOpenDataSource.Page page, DataSourceImpl ds) {
+	public DataPageImpl(int pageIndex,CommandOpenDataSource.Page page, DataSourceImpl ds) {
+		this.pageIndex = pageIndex;
 		this.page = page;
 		dataSource = ds;
 	}
@@ -51,13 +60,30 @@ public class DataPageImpl implements DataPage {
 		return dataSource;
 	}
 
-	public void requestPageData() {
-		// TODO Auto-generated method stub
-		
+	public void requestPageData(final Callback<CommandGetRecords.Response, Void> after) {
+		Cache.getPage(dataSource.getHost(),dataSource.getSessionId(),
+				dataSource.getCursor().getCursorId(),pageIndex,
+				new Callback<CommandGetRecords.Response, Void>(){
+					@Override
+					public Void call(CommandGetRecords.Response r) {
+						records = null;
+						page = r.getPages().get(0);
+						if(after!=null) after.call(r);
+						return null;
+					}
+		},errorHandler);
 	}
 
 	public boolean isRequest() {
 		return request;
+	}
+
+	public Callback<Exception, Void> getErrorHandler() {
+		return errorHandler;
+	}
+
+	public void setErrorHandler(Callback<Exception, Void> errorHandler) {
+		this.errorHandler = errorHandler;
 	}
 
 }

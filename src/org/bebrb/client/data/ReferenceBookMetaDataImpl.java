@@ -30,14 +30,15 @@ public class ReferenceBookMetaDataImpl implements ReferenceBookMetaData {
 		history = meta.getHistoryAvailable();
 		type = meta.getReferenceType();
 		cc = meta.getCacheControl();
-		
+		int idx = 0;
 		List<CommandGetAppContext.Attribute> alist = meta.getAttributes();
 		for (CommandGetAppContext.Attribute a : alist) {
-			attrs.add(AttributeImpl.createAttribute(a, this));
+			attrs.add(AttributeImpl.createAttribute(idx,a, this));
 			if(a.getKey())
 				keyAttribute = attrs.get(attrs.size()-1);
 			if(meta.getParentKey()!=null && meta.getParentKey().equalsIgnoreCase(a.getName()))
 				parentKey = attrs.get(attrs.size()-1);
+			idx++;
 		}
 		сanChoiseFolder = meta.getCanChoiseFolder();
 		actualCacheDate = meta.getActualDate();

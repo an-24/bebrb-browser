@@ -21,10 +21,12 @@ public abstract class BaseDataSetImpl implements BaseDataSet {
 		this.id = ds.getId();
 		this.name = ds.getName();
 		List<CommandGetAppContext.Attribute> attrs = ds.getAttributes();
+		int idx = 0;
 		for (CommandGetAppContext.Attribute a : attrs) {
-			attributes.add(AttributeImpl.createAttribute(a,this));
+			attributes.add(AttributeImpl.createAttribute(idx,a,this));
 			if(a.getKey())
 				key = attributes.get(attributes.size()-1);
+			idx++;
 		}
 		this.cc = ds.getCacheControl();
 		this.actualDate = ds.getActualDate();
@@ -34,10 +36,12 @@ public abstract class BaseDataSetImpl implements BaseDataSet {
 		this.id = ds.getReferenceBook().getMetaData().getId()+"."+ds.getName();
 		this.name = ds.getTitle();
 		List<CommandGetAppContext.Attribute> attrs = ds.getReferenceBook().getMetaData().getAttributes();
+		int idx = 0;
 		for (CommandGetAppContext.Attribute a : attrs) {
-			attributes.add(AttributeImpl.createAttribute(a,this));
+			attributes.add(AttributeImpl.createAttribute(idx,a,this));
 			if(a.getKey())
 				key = attributes.get(attributes.size()-1);
+			idx++;
 		}
 		this.cc = ds.getReferenceBook().getMetaData().getCacheControl();
 		this.actualDate = ds.getReferenceBook().getMetaData().getActualDate();

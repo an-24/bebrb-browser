@@ -7,16 +7,19 @@ import org.bebrb.server.net.CommandGetAppContext;
 public class AttributeImpl implements Attribute {
 
 	private org.bebrb.server.net.CommandGetAppContext.Attribute originAttr;
-	private BaseDataSet ds; 
+	private BaseDataSet ds;
+	private int fieldNo; 
 	
-	static public Attribute createAttribute(CommandGetAppContext.Attribute attr, BaseDataSet ds) {
-		return new AttributeImpl(attr,ds);
+	static public Attribute createAttribute(int number,CommandGetAppContext.Attribute attr, BaseDataSet ds) {
+		return new AttributeImpl(number,attr,ds);
+		
 	}
 
 	
-	protected AttributeImpl(CommandGetAppContext.Attribute attr, BaseDataSet ds) {
+	protected AttributeImpl(int number,CommandGetAppContext.Attribute attr, BaseDataSet ds) {
 		this.originAttr = attr;
 		this.ds = ds;
+		this.fieldNo = number;
 	}
 
 	@Override
@@ -48,7 +51,7 @@ public class AttributeImpl implements Attribute {
 	public Attribute getForeignKey() {
 		org.bebrb.server.net.CommandGetAppContext.Attribute fk = originAttr.getForeignKey();
 		//FIXME определить источник данных
-		return new AttributeImpl(fk,null);
+		return new AttributeImpl(-1, fk,null);
 	}
 
 	@Override
@@ -64,6 +67,12 @@ public class AttributeImpl implements Attribute {
 	@Override
 	public int getMaxSizeChar() {
 		return originAttr.getMaxSizeChar();
+	}
+
+
+	@Override
+	public int getFieldNo() {
+		return fieldNo;
 	}
 
 }

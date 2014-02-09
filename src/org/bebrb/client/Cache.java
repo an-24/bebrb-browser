@@ -17,6 +17,7 @@ import org.bebrb.data.DataPage;
 import org.bebrb.server.data.DataSourceImpl.SortAttribute;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
+import org.bebrb.server.net.CommandGetRecords.Response;
 import org.bebrb.server.net.CommandOpenDataSource;
 import org.bebrb.server.net.CommandOpenReferenceView;
 
@@ -84,15 +85,12 @@ public class Cache {
 		// TODO Auto-generated method stub
 	}
 
-	public static Client requestRecords(Host currentHost,String sessionId, Cursor cursor, int i,
-			final Callback<CommandOpenDataSource.Response, Void> handler,
-			final Callback<Exception,Void> errhandler) {
-		
-		return null;
+	public static void getPage(Host host, String sessionId,
+			BigInteger cursorId, int numberPage, Callback<Response, Void> callback,
+			Callback<Exception, Void> error) {
 		// TODO Auto-generated method stub
 		
 	}
-
 	
 	public static class Cursor {
 		private BigInteger cursorId;
@@ -124,5 +122,7 @@ public class Cache {
 		}
 
 	}
+
+
 
 }

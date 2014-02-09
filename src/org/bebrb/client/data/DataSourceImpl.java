@@ -111,15 +111,26 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 		if(active) return;
 		
 		cursor = null;
-		
+		final Callback<Exception, Void> openError = new Callback<Exception, Void>() {
+
+			@Override
+			public Void call(Exception ex) {
+				callback.onError(ex);
+				return null;
+			}
+			
+		};
 		Callback<Response, Void> openHandler = new Callback<CommandOpenDataSource.Response, Void>() {
 			@Override
 			public Void call(CommandOpenDataSource.Response r) {
 				List<Page> sourcePages = r.getPages();
 				List<DataPage> pages =  new ArrayList<>(sourcePages.size());
+				int idx = 0;
 				for (final Page page : sourcePages) {
-					DataPage dp = new DataPageImpl(page,DataSourceImpl.this);
+					DataPage dp = new DataPageImpl(idx,page,DataSourceImpl.this);
+					((DataPageImpl)dp).setErrorHandler(openError);
 					pages.add(dp);
+					idx++;
 				}
 				cursor = new Cursor(r.getCursorId(),getCacheControl(),pages,r.getRecordCount());
 				active = true;
@@ -128,15 +139,6 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 				callback.onAfterOpen();
 				return null;
 			}
-		};
-		Callback<Exception, Void> openError = new Callback<Exception, Void>() {
-
-			@Override
-			public Void call(Exception ex) {
-				callback.onError(ex);
-				return null;
-			}
-			
 		};
 		// open
 		if(getCacheControl() == CacheControl.None) 
@@ -270,6 +272,14 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 	@Override
 	public int getRecordCount() {
 		return cursor.getRecordCount();
+	}
+
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public Host getHost() {
+		return host;
 	}
 
 

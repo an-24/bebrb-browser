@@ -20,10 +20,12 @@ public class RecordImpl implements Record {
 	private DataPageImpl page;
 	private Field<?> key;
 	private HashMap<String, Field<?>> fieldsIdxByName;
+	private int fieldCount;
 
 	public RecordImpl(DataPageImpl dp, List<Object> values) {
 		this.page = dp;
 		this.data = values;
+		this.fieldCount = dp.getDataSource().getAttributes().size();
 	}
 
 	@Override
@@ -85,16 +87,20 @@ public class RecordImpl implements Record {
 
 	private void makeFields() {
 		if(fields!=null) return;
-		fields = new ArrayList<>(data.size());
-		fieldsIdxByName = new HashMap<>(data.size()); 
+		fields = new ArrayList<>(fieldCount);
+		fieldsIdxByName = new HashMap<>(fieldCount); 
 		List<Attribute> attrs = page.getDataSource().getAttributes();
-		for (int i = 0, len = data.size(); i < len; i++) {
+		for (int i = 0, len = fieldCount; i < len; i++) {
 			Attribute attr = attrs.get(i);
 			Field<?> fld = new FieldImpl<>(attr, this, i);
 			fields.add(fld);
 			if(attr.isKey()) key = fld;
 			fieldsIdxByName.put(attr.getName(), fld);
 		}
+	}
+
+	public int getFieldCount() {
+		return fieldCount;
 	}
 
 }

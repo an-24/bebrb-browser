@@ -4,19 +4,9 @@ import java.util.AbstractList;
 import java.util.Collection;
 import java.util.List;
 
-import org.bebrb.client.Cache.Cursor;
-import org.bebrb.client.data.DataPageImpl;
-import org.bebrb.client.data.DataSourceImpl;
-import org.bebrb.client.data.RecordImpl;
-import org.bebrb.client.utils.Resources;
-import org.bebrb.data.Attribute;
-import org.bebrb.data.DataPage;
-import org.bebrb.data.DataSource;
-import org.bebrb.data.Field;
-import org.bebrb.data.Record;
-
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -32,9 +22,21 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TableColumn.CellDataFeatures;
+import javafx.scene.control.TableView;
 import javafx.util.Callback;
+
+import org.bebrb.client.Cache.Cursor;
+import org.bebrb.client.data.DataPageImpl;
+import org.bebrb.client.data.DataSourceImpl;
+import org.bebrb.client.data.RecordWaiting;
+import org.bebrb.client.utils.Resources;
+import org.bebrb.data.Attribute;
+import org.bebrb.data.DataPage;
+import org.bebrb.data.DataSource;
+import org.bebrb.data.Field;
+import org.bebrb.data.Record;
+import org.bebrb.server.net.CommandGetRecords;
 
 public class DataGrid extends TableView<Record> implements ControlLink {
 	private static final double CHECK_COLUMN_SIZE = 30;
@@ -48,10 +50,18 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		setPlaceholder(new Label(Resources.getBungles().getString("tableContentNotFound")));
 	}
 	
-	static public TableColumn<Record, Field<?>> createColumn(Attribute attr) {
-		TableColumn<Record, Field<?>> col = new TableColumn<>();
+	static public TableColumn<Record, String> createColumn(final Attribute attr) {
+		TableColumn<Record, String> col = new TableColumn<>();
 		col.setId(attr.getName());
 		col.setText(attr.getCaption());
+		col.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Record,String>, ObservableValue<String>>() {
+			@Override
+			public ObservableValue<String> call(
+					CellDataFeatures<Record, String> rec) {
+				return new ReadOnlyStringWrapper((String) rec.getValue().getValues().get(attr.getFieldNo()));
+			}
+
+		});
 		// TODO Auto-generated method stub
 		return col;
 	}
@@ -232,8 +242,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	}
 
 	private void clearData() {
-		// TODO Auto-generated method stub
-		
+		setItems(null);
 	}
 	
 	private void clearFields() {
@@ -318,9 +327,8 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		public Record get(int idx) {
 			DataPage page = pages.get(idx/pageSize);
 			if(!page.isAlive()) {
-				DataPageImpl dp = ((DataPageImpl)page);
-				if(!dp.isRequest()) dp.requestPageData();
-				return new RecordZero(dp);
+				requestPageData(page);
+				return new RecordWaiting((DataPageImpl)page);
 			} else
 			return page.getRecords().get(idx%pageSize);
 		}
@@ -333,8 +341,14 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	}
 
 
-	public void requestPageData(DataPage page) {
-		// TODO Auto-generated method stub
-		
+	private void requestPageData(DataPage page) {
+		DataPageImpl dp = ((DataPageImpl)page);
+		if(!dp.isRequest()) dp.requestPageData(new Callback<CommandGetRecords.Response, Void>() {
+			@Override
+			public Void call(CommandGetRecords.Response r) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+		});
 	}
 }
