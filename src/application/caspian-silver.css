@@ -136,6 +136,10 @@
     -fx-text-fill: -fx-text-inner-color;
 }
 
+.data-grid {
+    -fx-skin: "org.bebrb.client.controls.skin.DataGridSkin";
+}
+
 /* =============================================================================================================================
 * ListView
 */

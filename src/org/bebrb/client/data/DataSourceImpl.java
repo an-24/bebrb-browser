@@ -115,6 +115,8 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 
 			@Override
 			public Void call(Exception ex) {
+				// notify controls
+				for (ControlLink c : linkControls) c.finishRequestData();
 				callback.onError(ex);
 				return null;
 			}
@@ -128,22 +130,28 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 				int idx = 0;
 				for (final Page page : sourcePages) {
 					DataPage dp = new DataPageImpl(idx,page,DataSourceImpl.this);
-					((DataPageImpl)dp).setErrorHandler(openError);
 					pages.add(dp);
 					idx++;
 				}
 				cursor = new Cursor(r.getCursorId(),getCacheControl(),pages,r.getRecordCount());
 				active = true;
 				// notify controls
-				for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, true); 
+				for (ControlLink c : linkControls) {
+					c.finishRequestData();
+					c.linkActive(DataSourceImpl.this, true);
+				}
 				callback.onAfterOpen();
 				return null;
 			}
 		};
+		// notify controls
+		for (ControlLink c : linkControls) c.startRequestData();
 		// open
-		if(getCacheControl() == CacheControl.None) 
-			currentQuery = Cache.openDirect(host, sessionId,getId(),params,maxSizeDataPage,sorting,openHandler,openError);else
+		if(getCacheControl() == CacheControl.None) {
+			currentQuery = Cache.openDirect(host, sessionId,getId(),params,maxSizeDataPage,sorting,openHandler,openError);			
+		} else {
 			currentQuery = Cache.openFromCache(host, getCacheControl(), getActualDate(), sessionId,getId(),params,maxSizeDataPage,sorting,openHandler,openError);
+		}	
 	}
 
 	@Override

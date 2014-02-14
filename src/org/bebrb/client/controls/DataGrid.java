@@ -20,10 +20,13 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 
 import org.bebrb.client.Cache.Cursor;
@@ -34,17 +37,20 @@ import org.bebrb.client.utils.Resources;
 import org.bebrb.data.Attribute;
 import org.bebrb.data.DataPage;
 import org.bebrb.data.DataSource;
-import org.bebrb.data.Field;
 import org.bebrb.data.Record;
 import org.bebrb.server.net.CommandGetRecords;
+
 
 public class DataGrid extends TableView<Record> implements ControlLink {
 	private static final double CHECK_COLUMN_SIZE = 30;
 	private TableColumn<Record, CheckMarker> check;
 	private DataSource dataSource;
+	private StackPane maskPane;
+	private int lockControlLayout = 0;
 
 	public DataGrid() {
 		super();
+		getStyleClass().add("data-grid");
 		check = createFirstColumn();
 		getColumns().add(check);
 		setPlaceholder(new Label(Resources.getBungles().getString("tableContentNotFound")));
@@ -55,10 +61,11 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		col.setId(attr.getName());
 		col.setText(attr.getCaption());
 		col.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Record,String>, ObservableValue<String>>() {
+			int fieldNo = attr.getFieldNo();
 			@Override
 			public ObservableValue<String> call(
 					CellDataFeatures<Record, String> rec) {
-				return new ReadOnlyStringWrapper((String) rec.getValue().getValues().get(attr.getFieldNo()));
+				return new ReadOnlyStringWrapper((String) rec.getValue().getValues().get(fieldNo));
 			}
 
 		});
@@ -186,6 +193,9 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	public void setDataSet(DataSource ds) {
 		if(this.dataSource!=ds) {
 
+			//if request data
+			if(isLockControl()) finishRequestData(); 
+			
 			clearLayout();
 			
 			if(dataSource!=null && dataSource instanceof DataSourceLink)
@@ -343,12 +353,43 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 
 	private void requestPageData(DataPage page) {
 		DataPageImpl dp = ((DataPageImpl)page);
-		if(!dp.isRequest()) dp.requestPageData(new Callback<CommandGetRecords.Response, Void>() {
-			@Override
-			public Void call(CommandGetRecords.Response r) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		});
+		if(!dp.isRequest()) {
+			startRequestData();
+			dp.requestPageData(new Callback<CommandGetRecords.Response, Void>() {
+				@Override
+				public Void call(CommandGetRecords.Response r) {
+					finishRequestData();
+					return null;
+				}
+			}, new Callback<Exception, Void>() {
+
+				@Override
+				public Void call(Exception ex) {
+					finishRequestData();
+					return null;
+				}
+			});
+		};
+	}
+	
+
+	@Override
+	public void startRequestData() {
+		if(lockControlLayout==0) {
+			// refresh layout
+		}
+		lockControlLayout++;
+	}
+	
+	@Override
+	public void finishRequestData() {
+		lockControlLayout--;
+		if(lockControlLayout==0) {
+			// refresh layout
+		}
+	}
+	
+	public boolean isLockControl() {
+		return lockControlLayout>0;
 	}
 }

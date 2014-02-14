@@ -37,6 +37,9 @@ public class Cache {
 				new OnResponse() {
 					@Override
 					public void replyСame(String message) throws Exception {
+						
+Thread.sleep(15000);
+						
 						// parse
 						CommandOpenDataSource.Response response = CommandFactory
 								.createGson()
