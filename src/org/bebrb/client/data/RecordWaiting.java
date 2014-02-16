@@ -13,6 +13,10 @@ public class RecordWaiting extends RecordImpl {
 	public List<Object> getValues() {
 		return new AbstractList<Object>() {
 			@Override
+		    public void add(int index, Object element) {
+				// nothing
+		    }
+			@Override
 			public Object get(int index) {
 				return null;
 			}

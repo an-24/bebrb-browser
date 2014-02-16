@@ -1,7 +1,9 @@
 package org.bebrb.client.controls;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 import javafx.application.Platform;
@@ -10,26 +12,29 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 
 import org.bebrb.client.Cache.Cursor;
+import org.bebrb.client.controls.ControlLink.ActiveMode;
+import org.bebrb.client.controls.skin.DataGridSkin;
 import org.bebrb.client.data.DataPageImpl;
 import org.bebrb.client.data.DataSourceImpl;
 import org.bebrb.client.data.RecordWaiting;
@@ -38,14 +43,19 @@ import org.bebrb.data.Attribute;
 import org.bebrb.data.DataPage;
 import org.bebrb.data.DataSource;
 import org.bebrb.data.Record;
+import org.bebrb.server.data.DataSourceImpl.SortAttribute;
 import org.bebrb.server.net.CommandGetRecords;
+
+import com.sun.javafx.collections.transformation.SortableList;
+import com.sun.javafx.collections.transformation.TransformationList;
+import com.sun.javafx.scene.control.TableColumnComparator;
 
 
 public class DataGrid extends TableView<Record> implements ControlLink {
 	private static final double CHECK_COLUMN_SIZE = 30;
+	private static final double COLUMN_MIN_SIZE = 24;
 	private TableColumn<Record, CheckMarker> check;
 	private DataSource dataSource;
-	private StackPane maskPane;
 	private int lockControlLayout = 0;
 
 	public DataGrid() {
@@ -54,11 +64,41 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		check = createFirstColumn();
 		getColumns().add(check);
 		setPlaceholder(new Label(Resources.getBungles().getString("tableContentNotFound")));
+		
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				makeContextMenu();
+			}
+		});
 	}
 	
+	private void makeContextMenu() {
+		setContextMenu(new ContextMenu());
+		MenuItem item;
+		
+
+		// refresh
+		item = new MenuItem(Resources.getBungles().getString("grid-menu-refresh"));
+		item.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				((DataSourceImpl) dataSource).refresh();
+			}
+		});
+		getContextMenu().getItems().add(item);
+		//
+		
+
+		// prop
+		item = new MenuItem(Resources.getBungles().getString("grid-menu-property"));
+		getContextMenu().getItems().add(item);
+	}
+
 	static public TableColumn<Record, String> createColumn(final Attribute attr) {
 		TableColumn<Record, String> col = new TableColumn<>();
 		col.setId(attr.getName());
+		col.setMinWidth(COLUMN_MIN_SIZE);
 		col.setText(attr.getCaption());
 		col.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<Record,String>, ObservableValue<String>>() {
 			int fieldNo = attr.getFieldNo();
@@ -76,6 +116,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	private TableColumn<Record, CheckMarker> createFirstColumn() {
 		TableColumn<Record, CheckMarker> chcol = new TableColumn<>();
 		chcol.setSortable(false);
+		chcol.setId("_check");
 		chcol.setMaxWidth(CHECK_COLUMN_SIZE);
 		chcol.setMinWidth(CHECK_COLUMN_SIZE);
 		chcol.setCellFactory(new Callback<TableColumn<Record,CheckMarker>, TableCell<Record,CheckMarker>>() {
@@ -208,7 +249,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 			
 			
 			if(dataSource!=null && dataSource.isOpen()) {
-				buildLayout();	
+				buildLayout(true);	
 			}
 		}
 	}
@@ -217,17 +258,17 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		return this.dataSource;
 	}
 
-	private void buildLayout() {
+	private void buildLayout(final boolean createflds) {
 		if(!Platform.isFxApplicationThread()) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					createFields();
+					if(createflds) createFields();
 					fillData();
 				}
 			});
 		} else {
-			createFields();
+			if(createflds) createFields();
 			fillData();
 		}
 	}
@@ -257,8 +298,15 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	
 	private void clearFields() {
 		//clean columns
+		// getItems may be null
+		// Its throw exception (clear call sort method!)
+		setItems(FXCollections.<Record>observableArrayList());
+		getSortOrder().clear();
 		ObservableList<TableColumn<Record, ?>> cols = getColumns();
-		while(cols.size()>1) cols.remove(1);
+		cols.clear();
+		cols.add(check);
+		//restore null
+		setItems(null);
 	}
 
 	private void createFields() {
@@ -271,35 +319,33 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	}
 
 	@Override
-	public void linkActive(DataSourceLink dsl, boolean active) {
-		if(active) {
-			buildLayout();	
-		} else {
+	public void linkActive(DataSourceLink dsl, ActiveMode active) {
+		switch (active) {
+		case Opening:
+		case Refreshing:
+			buildLayout(active==ActiveMode.Opening);
+			break;
+		case Closing:
 			clearLayout();
+			break;
+
+		default:
+			break;
 		}
 	}
 
 
 
-	class RecordList extends AbstractList<Record> implements ObservableList<Record> {
+	class RecordList extends TransformationList<Record,Record> implements SortableList<Record> {
+
 		private int pageSize = dataSource.getMaxSizeDataPage();
 		private Cursor cursor = ((DataSourceImpl) dataSource).getCursor();
 		private List<DataPage> pages = cursor.getDataPages();
+		private com.sun.javafx.collections.transformation.SortableList.SortMode mode = SortableList.SortMode.BATCH;
+		private Comparator<? super Record> comparator;
 
-		@Override
-		public void addListener(InvalidationListener arg0) {
-		}
-
-		@Override
-		public void removeListener(InvalidationListener arg0) {
-		}
-
-		@Override
-		public void removeListener(ListChangeListener<? super Record> arg0) {
-		}
-
-		@Override
-		public void addListener(ListChangeListener<? super Record> arg0) {
+		protected RecordList() {
+			super(new ArrayList<Record>()); //stub
 		}
 		
 		@Override
@@ -329,7 +375,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		}
 
 		@Override
-		public boolean setAll(Collection<? extends Record> arg0) {
+		public boolean setAll(Collection<? extends Record> list) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -347,7 +393,63 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		public int size() {
 			return ((DataSourceLink)dataSource).getRecordCount();
 		}
-		
+
+		@Override
+		public int getSourceIndex(int arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		protected void onSourceChanged(Change<? extends Record> arg0) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Comparator<? super Record> getComparator() {
+			return comparator;
+		}
+
+		@Override
+		public SortableList.SortMode getMode() {
+			return mode;
+		}
+
+		@Override
+		public void setComparator(Comparator<? super Record> comparator) {
+			this.comparator = comparator;
+		}
+
+		@Override
+		public void setMode(SortableList.SortMode mode) {
+			this.mode = mode;
+			
+		}
+
+		@Override
+		public void sort() {
+			DataSourceImpl ds = ((DataSourceImpl) dataSource);
+			// bug javafx: double call sort when click to column 
+			// if columns(more than one) already in sort state
+			if(ds.isRefreshProcess()) return;
+			
+			if(ds.isEof()) {
+				// sort on client
+				// all fetching and sorting on client
+				ObservableList<Record> newlist = FXCollections.observableArrayList(this); 
+		        FXCollections.sort(newlist, comparator);
+		        // new simple list
+		        DataGrid.this.setItems(newlist);
+			} else {
+				// reopen
+				ArrayList<SortAttribute> sorting = new ArrayList<>();
+				ObservableList<TableColumn<?, ?>> cols = ((TableColumnComparator)comparator).getColumns();
+				for (TableColumn<?, ?> c : cols) 
+					sorting.add(new SortAttribute(c.getId(),c.getSortType()==TableColumn.SortType.DESCENDING));
+				ds.setSorting(sorting);
+				ds.refresh();
+			}
+		}
+
 	}
 
 
@@ -376,7 +478,10 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	@Override
 	public void startRequestData() {
 		if(lockControlLayout==0) {
-			// refresh layout
+			DataGridSkin<?> skin = (DataGridSkin<?>)getSkin();
+			if(skin!=null) {
+				skin.requestLayout();
+			}
 		}
 		lockControlLayout++;
 	}
@@ -384,9 +489,13 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	@Override
 	public void finishRequestData() {
 		lockControlLayout--;
-		if(lockControlLayout==0) {
-			// refresh layout
-		}
+		if(lockControlLayout<=0) {
+			DataGridSkin<?> skin = (DataGridSkin<?>)getSkin();
+			if(skin!=null) {
+				skin.requestLayout();
+			}
+			lockControlLayout = 0;
+		};
 	}
 	
 	public boolean isLockControl() {

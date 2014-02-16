@@ -17,6 +17,7 @@ import org.bebrb.data.DataPage;
 import org.bebrb.server.data.DataSourceImpl.SortAttribute;
 import org.bebrb.server.net.Command;
 import org.bebrb.server.net.CommandFactory;
+import org.bebrb.server.net.CommandGetRecords;
 import org.bebrb.server.net.CommandGetRecords.Response;
 import org.bebrb.server.net.CommandOpenDataSource;
 import org.bebrb.server.net.CommandOpenReferenceView;
@@ -37,9 +38,6 @@ public class Cache {
 				new OnResponse() {
 					@Override
 					public void replyСame(String message) throws Exception {
-						
-Thread.sleep(15000);
-						
 						// parse
 						CommandOpenDataSource.Response response = CommandFactory
 								.createGson()
@@ -88,11 +86,40 @@ Thread.sleep(15000);
 		// TODO Auto-generated method stub
 	}
 
-	public static void getPage(Host host, String sessionId,
-			BigInteger cursorId, int numberPage, Callback<Response, Void> callback,
-			Callback<Exception, Void> error) {
-		// TODO Auto-generated method stub
-		
+	public static Client getPage(Host currentHost, String sessionId,
+			BigInteger cursorId, int numberPage, 
+			final Callback<CommandGetRecords.Response, Void> handler,
+			final Callback<Exception, Void> errhandler) {
+
+		Client query = new Client(currentHost.domain, currentHost.port,
+				new OnResponse() {
+					@Override
+					public void replyСame(String message) throws Exception {
+						// parse
+						CommandGetRecords.Response response = CommandFactory
+								.createGson()
+								.fromJson(message,CommandGetRecords.Response.class);
+						if (response.getStatus() != Command.OK) {
+							log.log(Level.SEVERE,
+									response.getMessage()+ " detail:"+ response.getTrace());
+							throw new Exception(
+									String.format(Resources.getBungles().getString("ex-OnServerError"),
+											response.getMessageForUser()));
+						} else
+							log.log(Level.INFO,"response:" + message);
+						handler.call(response);
+					}
+			
+		}, new OnError() {
+			@Override
+			public void errorCame(Exception ex) {
+				errhandler.call(ex);
+			}
+			
+		});
+		CommandGetRecords cmd = new CommandGetRecords(sessionId, cursorId, numberPage, numberPage);
+		query.send(cmd);
+		return query; 
 	}
 	
 	public static class Cursor {

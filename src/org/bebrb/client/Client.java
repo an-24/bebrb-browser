@@ -72,6 +72,8 @@ public class Client {
 					};
 					try {
 						response.replyСame(data);
+					} catch (InterruptedException e) {
+						log.info("command interrupt: "+cmd);
 					} catch (Exception ex) {
 						throw new ExecException(ex.getMessage(), ex);
 					}
@@ -90,14 +92,9 @@ public class Client {
 		if(sync)
 			try {
 				thread.join();
-			} catch (final InterruptedException e) {
+			} catch (InterruptedException e) {
 				result = false;
-				Platform.runLater(new Runnable() {
-					@Override
-					public void run() {
-						error.errorCame(e);
-					}
-				}); 
+				log.info("command interrupt: "+cmd);
 			}
 		return result; 
 	}

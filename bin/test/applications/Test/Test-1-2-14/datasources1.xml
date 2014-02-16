@@ -30,7 +30,7 @@
 	  	   </insert>
 	  </datasource>
 	  
-	  <datasource id="q1" lazy="false">
+	  <datasource id="q1" lazy="true">
 	  	<reference id="r1" view="v1"></reference>
 	  </datasource>
 	</datasources>

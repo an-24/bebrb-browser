@@ -3,6 +3,7 @@ package application;
 import java.util.Map;
 import java.util.logging.Level;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuButton;
@@ -71,7 +72,7 @@ public class DataSourcePageController {
 	}
 
 
-	public void setDataSource(CommandGetAppContext.DataSource data) throws Exception {
+	public void setDataSource(final CommandGetAppContext.DataSource data) throws Exception {
 		tpHeader.setText(data.getName());
 		// new datasource
 		dataSource = DataSourceImpl.createDataSet(appController.getHost(), appController.getSession().getId(), data);
@@ -88,6 +89,12 @@ public class DataSourcePageController {
 				
 				@Override
 				public void onAfterOpen() {
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							tpHeader.setText(data.getName()+" ("+((DataSourceImpl)dataSource).getRecordCount()+")");
+						}
+					});
 				}
 				
 				@Override
@@ -98,7 +105,7 @@ public class DataSourcePageController {
 	}
 
 
-	public void setReferenceView(CommandGetAppContext.View data) throws Exception {
+	public void setReferenceView(final CommandGetAppContext.View data) throws Exception {
 		tpHeader.setText(data.getReferenceBook().getMetaData().getReferenceTitle()+":"+data.getTitle());
 		// new datasource
 		dataSource = ViewImpl.createView(appController.getHost(), appController.getSession().getId(),data).getDataSource();
@@ -107,12 +114,19 @@ public class DataSourcePageController {
 		btnEdit.setDisable(!data.getReferenceBook().getCanEdit());
 		btnDelete.setDisable(!data.getReferenceBook().getCanDelete());
 		// open
+		tvData.setDataSet(dataSource);
 		if(!dataSource.isOpen()) 
 			dataSource.open(params, new OnOpen() {
 				
 				@Override
 				public void onAfterOpen() {
-					tvData.setDataSet(dataSource);
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							tpHeader.setText(data.getReferenceBook().getMetaData().getReferenceTitle()+":"+data.getTitle()+
+									" ("+((DataSourceImpl)dataSource).getRecordCount()+")");
+						}
+					});
 				}
 				
 				@Override

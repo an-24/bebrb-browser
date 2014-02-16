@@ -13,6 +13,7 @@ import org.bebrb.client.Client;
 import org.bebrb.client.Host;
 import org.bebrb.client.controls.ControlLink;
 import org.bebrb.client.controls.DataSourceLink;
+import org.bebrb.client.controls.ControlLink.ActiveMode;
 import org.bebrb.data.Attribute;
 import org.bebrb.data.DataPage;
 import org.bebrb.data.DataSource;
@@ -37,7 +38,11 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 	private Host host;
 	private Client currentQuery;
 	private boolean active;
+	private boolean eof = true;
 	private HashSet<ControlLink> linkControls = new HashSet<>();
+	private Map<String, Object> safeParams;
+	private OnOpen safeOpenCallback;
+	private Boolean refreshing = false;
 
 	public static DataSource createDataSet(Host host,String sessionId,CommandGetAppContext.DataSource ds) {
 		return new DataSourceImpl(host,sessionId,ds);
@@ -110,6 +115,9 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 	public void open(Map<String, Object> params, final OnOpen callback) {
 		if(active) return;
 		
+		safeParams = params;
+		safeOpenCallback = callback;
+		
 		cursor = null;
 		final Callback<Exception, Void> openError = new Callback<Exception, Void>() {
 
@@ -118,6 +126,8 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 				// notify controls
 				for (ControlLink c : linkControls) c.finishRequestData();
 				callback.onError(ex);
+				currentQuery = null;
+				refreshing = false;
 				return null;
 			}
 			
@@ -135,12 +145,15 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 				}
 				cursor = new Cursor(r.getCursorId(),getCacheControl(),pages,r.getRecordCount());
 				active = true;
+				eof = sourcePages.get(sourcePages.size()-1).getAlive();
 				// notify controls
 				for (ControlLink c : linkControls) {
 					c.finishRequestData();
-					c.linkActive(DataSourceImpl.this, true);
+					c.linkActive(DataSourceImpl.this, refreshing?ActiveMode.Refreshing:ActiveMode.Opening);
 				}
 				callback.onAfterOpen();
+				currentQuery = null;
+				refreshing = false;
 				return null;
 			}
 		};
@@ -154,18 +167,29 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 		}	
 	}
 
+	public void refresh() {
+		// columns don't need remove
+		//if(active) close();
+		active = false;
+		refreshing = true;
+		open(safeParams,safeOpenCallback);
+	}
+
 	@Override
 	public void stop() {
-		if(currentQuery!=null)
+		if(currentQuery!=null) {
 			currentQuery.interrupt();
+			currentQuery = null;
+		}	
 	}
 
 	@Override
 	public void close() {
 		if(!active) return;
 		active = false;
+		eof = true;
 		// notify controls
-		for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, false); 
+		for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, ActiveMode.Closing); 
 		// TODO Auto-generated method stub
 		
 	}
@@ -279,7 +303,7 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 
 	@Override
 	public int getRecordCount() {
-		return cursor.getRecordCount();
+		return cursor==null?0:cursor.getRecordCount();
 	}
 
 	public String getSessionId() {
@@ -289,6 +313,21 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 	public Host getHost() {
 		return host;
 	}
+
+	public boolean isEof() {
+		return eof;
+	}
+
+	public void RequestOfPage(Client query) {
+		currentQuery = query;
+	}
+
+	public boolean isRefreshProcess() {
+		synchronized(refreshing) {
+			return refreshing;
+		}
+	}
+
 
 
 }
