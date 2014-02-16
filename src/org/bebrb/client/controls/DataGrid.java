@@ -1,19 +1,16 @@
 package org.bebrb.client.controls;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -29,11 +26,9 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
-import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
 
 import org.bebrb.client.Cache.Cursor;
-import org.bebrb.client.controls.ControlLink.ActiveMode;
 import org.bebrb.client.controls.skin.DataGridSkin;
 import org.bebrb.client.data.DataPageImpl;
 import org.bebrb.client.data.DataSourceImpl;
@@ -60,6 +55,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 
 	public DataGrid() {
 		super();
+		getSelectionModel().setCellSelectionEnabled(true);
 		getStyleClass().add("data-grid");
 		check = createFirstColumn();
 		getColumns().add(check);
