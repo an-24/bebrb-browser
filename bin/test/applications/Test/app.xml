@@ -12,9 +12,9 @@
 			<config>
 				<option name="m17fr" value="0122"/>
 			</config>
-			<!-- <database driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://localhost\\SQLEXPRESS:1433;databaseName=test;" user="sa" password="rol" ident-case-sensitive="false"/>-->
+			<database driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://localhost\\SQLEXPRESS:1433;databaseName=test;" user="sa" password="rol" ident-case-sensitive="false">
 			<!-- <database driver="org.firebirdsql.jdbc.FBDriver" url="jdbc:firebirdsql:localhost/3050:D:\WORK\bebrb\src\test\db\fb\test.fdb" user="sysdba" password="masterkey"  ident-case-sensitive="false"> -->
-			<database driver="org.firebirdsql.jdbc.FBDriver" url="jdbc:firebirdsql:localhost/3050:/Users/andrej/Documents/workspace/bebrb/src/test/db/fb/test.fdb" user="sysdba" password="rolling"  ident-case-sensitive="false"> 
+			<!-- <database driver="org.firebirdsql.jdbc.FBDriver" url="jdbc:firebirdsql:localhost/3050:/Users/andrej/Documents/workspace/bebrb/src/test/db/fb/test.fdb" user="sysdba" password="rolling"  ident-case-sensitive="false"> -->
 				<params>
 					<param name="charSet" value="UTF-8"/>
 					<param name="encoding" value="UTF8"/>

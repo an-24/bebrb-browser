@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Level;
 
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -33,6 +34,7 @@ import org.bebrb.client.controls.skin.DataGridSkin;
 import org.bebrb.client.data.DataPageImpl;
 import org.bebrb.client.data.DataSourceImpl;
 import org.bebrb.client.data.RecordWaiting;
+import org.bebrb.client.utils.Logger;
 import org.bebrb.client.utils.Resources;
 import org.bebrb.data.Attribute;
 import org.bebrb.data.DataPage;
@@ -47,11 +49,16 @@ import com.sun.javafx.scene.control.TableColumnComparator;
 
 
 public class DataGrid extends TableView<Record> implements ControlLink {
+	static private enum MarkerDefault {None, AllMarked, AllUnMarked};
+	static private enum ForEarchRecordType {All, OnlyFetching, OnlyMarkers}
+	
 	private static final double CHECK_COLUMN_SIZE = 30;
 	private static final double COLUMN_MIN_SIZE = 24;
 	private TableColumn<Record, CheckMarker> check;
 	private DataSource dataSource;
 	private int lockControlLayout = 0;
+	
+	private MarkerDefault markerDefault = MarkerDefault.None;  
 
 	public DataGrid() {
 		super();
@@ -67,8 +74,15 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 				makeContextMenu();
 			}
 		});
+		
+		createKeyboardEvents();
 	}
 	
+	private void createKeyboardEvents() {
+		// TODO Auto-generated method stub
+		
+	}
+
 	private void makeContextMenu() {
 		setContextMenu(new ContextMenu());
 		MenuItem item;
@@ -125,6 +139,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 					protected void updateItem(final CheckMarker item, boolean empty) {
 						if(item==null) return;
 						CheckBox box = new CheckBox();
+						box.setFocusTraversable(false);
 						box.setSelected(item.getMarked());
 						box.selectedProperty().addListener(new ChangeListener<Boolean>() {
 							@Override
@@ -144,7 +159,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 			@Override
 			public ObservableValue<CheckMarker> call(
 					CellDataFeatures<Record, CheckMarker> param) {
-				return new SimpleObjectProperty<>(makeMarker(param.getValue()));
+				return new SimpleObjectProperty<>(getMarkerObject(param.getValue()));
 			}
 		});
 		
@@ -161,19 +176,19 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		menu.getItems().get(0).setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent action) {
-				setMarkAll(true);
+				setMarkerAll(true);
 			}
 		});
 		menu.getItems().get(1).setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent action) {
-				setMarkAll(false);
+				setMarkerAll(false);
 			}
 		});
 		menu.getItems().get(2).setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent action) {
-				invertMarkers(false);
+				invertMarker();
 			}
 		});
 		chcol.setGraphic(menu);
@@ -182,34 +197,102 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 	}
 
 
-	public void invertMarkers(boolean b) {
-		// TODO Auto-generated method stub
+	public void invertMarker() {
+		markerDefault = MarkerDefault.None;
+		
+		try {
+			forRecords(new Callback<Record, Boolean>() {
+				@Override
+				public Boolean call(Record r) {
+					CheckMarker mrk = getMarkerObject(r);
+					mrk.setMarked(!mrk.getMarked());
+					return true;
+				}
+			}, ForEarchRecordType.OnlyFetching);
+		} catch (Exception e) {
+			Logger.getLogger().log(Level.SEVERE, e.getMessage(), e);
+		}
+		
 		refreshLayout();
 	}
 
 
-	public void setMarkAll(boolean b) {
-		// TODO Auto-generated method stub
+	public void setMarkerAll(final boolean b) {
+		try {
+			forRecords(new Callback<Record, Boolean>() {
+				@Override
+				public Boolean call(Record r) {
+					getMarkerObject(r).setMarked(b);
+					return true;
+				}
+			}, ForEarchRecordType.OnlyFetching);
+		} catch (Exception e) {
+			Logger.getLogger().log(Level.SEVERE, e.getMessage(), e);
+		}
+		// set default
+		markerDefault = b?MarkerDefault.AllMarked:MarkerDefault.AllUnMarked;
 		refreshLayout();
 	}
 
+	public void setMarker(boolean b) {
+		Record r = getSelectionModel().getSelectedItem();
+		if(r!=null)
+			getMarkerObject(r).setMarked(b);
+	}
 
+	public boolean getMarker() {
+		return getMarker(getSelectionModel().getSelectedItem());
+	}
+
+	public boolean getMarker(Record r) {
+		if(r!=null)	return getMarkerObject(r).getMarked();
+		return false;
+	}
+	
 	private void refreshLayout() {
 		getColumns().get(0).setVisible(false);
 		getColumns().get(0).setVisible(true);
 	}
+	
+	private void forRecords(Callback<Record, Boolean> cb, ForEarchRecordType forType) throws Exception {
+		DataSourceImpl ds = ((DataSourceImpl) dataSource);
+		
+		Cursor cursor = ds.getCursor();
+		List<DataPage> pages = cursor.getDataPages();
+		for (DataPage dp : pages) {
+			if(!dp.isAlive()) {
+				if(forType==ForEarchRecordType.All) {
+					requestPageData(dp);
+					((DataPageImpl)dp).waitAlive();
+				} else
+					if(forType==ForEarchRecordType.OnlyFetching) break; 
+			}
+			List<Record> recs = dp.getRecords();
+			if(forType==ForEarchRecordType.OnlyMarkers) {
+				for (Record r : recs) 
+					if(getMarker(r)) 
+						if(!cb.call(r)) break;
+			} else {
+				for (Record r : recs) {
+					if(!cb.call(r)) break;
+				}
+			}
+		}
+	}
 
 
-	private CheckMarker makeMarker(Record rec) {
+	private CheckMarker getMarkerObject(Record rec) {
 		int ccount = rec.getFields().size();
 		List<Object> values = rec.getValues();
 		CheckMarker obj = (CheckMarker) (values.size()>ccount?values.get(ccount):null);
 		if(obj==null) {
 			obj = new CheckMarker(rec);
+			obj.checked = markerDefault==MarkerDefault.AllMarked?true:false;
 			values.add(obj);
 		}
 		return obj;
 	}
+	
 
 
 	class CheckMarker {
@@ -219,9 +302,12 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 			record = rec;
 		}
 		public boolean getMarked() {
-			return  checked;
+			return markerDefault==MarkerDefault.AllMarked?true:
+				   markerDefault==MarkerDefault.AllUnMarked?false:
+				   checked;
 		}
 		public void setMarked(boolean b) {
+			markerDefault = MarkerDefault.None;
 			checked = b;
 		}
 	}
@@ -307,7 +393,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 
 	private void createFields() {
 		//new column list
-		List<Attribute> attrs = ((DataSource)dataSource).getAttributes();
+		List<Attribute> attrs = dataSource.getAttributes();
 		for (Attribute attr :attrs) {
 			if(attr.isVisible())
 				getColumns().add(DataGrid.createColumn(attr));
@@ -319,6 +405,7 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		switch (active) {
 		case Opening:
 		case Refreshing:
+			if(active==ActiveMode.Refreshing) resetSelection();
 			buildLayout(active==ActiveMode.Opening);
 			break;
 		case Closing:
@@ -330,6 +417,11 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		}
 	}
 
+
+
+	private void resetSelection() {
+		getSelectionModel().select(0,getColumns().get(1));
+	}
 
 
 	class RecordList extends TransformationList<Record,Record> implements SortableList<Record> {
@@ -427,6 +519,12 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 			// bug javafx: double call sort when click to column 
 			// if columns(more than one) already in sort state
 			if(ds.isRefreshProcess()) return;
+
+			ArrayList<SortAttribute> sorting = new ArrayList<>();
+			ObservableList<TableColumn<?, ?>> cols = ((TableColumnComparator)comparator).getColumns();
+			for (TableColumn<?, ?> c : cols) 
+				sorting.add(new SortAttribute(c.getId(),c.getSortType()==TableColumn.SortType.DESCENDING));
+			ds.setSorting(sorting);
 			
 			if(ds.isEof()) {
 				// sort on client
@@ -437,11 +535,6 @@ public class DataGrid extends TableView<Record> implements ControlLink {
 		        DataGrid.this.setItems(newlist);
 			} else {
 				// reopen
-				ArrayList<SortAttribute> sorting = new ArrayList<>();
-				ObservableList<TableColumn<?, ?>> cols = ((TableColumnComparator)comparator).getColumns();
-				for (TableColumn<?, ?> c : cols) 
-					sorting.add(new SortAttribute(c.getId(),c.getSortType()==TableColumn.SortType.DESCENDING));
-				ds.setSorting(sorting);
 				ds.refresh();
 			}
 		}

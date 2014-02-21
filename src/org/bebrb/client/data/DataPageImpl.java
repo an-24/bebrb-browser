@@ -19,6 +19,9 @@ public class DataPageImpl implements DataPage {
 	private boolean request;
 	private int pageIndex;
 	
+	private Object mutexRequest = new Object();
+	private Client queryRequest = null;
+	
 	public DataPageImpl(int pageIndex,CommandOpenDataSource.Page page, DataSourceImpl ds) {
 		this.pageIndex = pageIndex;
 		this.page = page;
@@ -60,33 +63,56 @@ public class DataPageImpl implements DataPage {
 
 	public void requestPageData(final Callback<CommandGetRecords.Response, Void> after,
 			final Callback<Exception,Void> errorHandler) {
-		request = true;
-		Client query = Cache.getPage(dataSource.getHost(),dataSource.getSessionId(),
-				dataSource.getCursor().getCursorId(),pageIndex,
-				new Callback<CommandGetRecords.Response, Void>(){
-					@Override
-					public Void call(CommandGetRecords.Response r) {
-						records = null;
-						page = r.getPages().get(0);
-						if(after!=null) after.call(r);
-						request = false;
-						dataSource.RequestOfPage(null);
-						return null;
-					}
-		},new Callback<Exception, Void>() {
-			@Override
-			public Void call(Exception ex) {
-				request = false;
-				if(errorHandler!=null) errorHandler.call(ex);
-				dataSource.RequestOfPage(null);
-				return null;
-			}
-		});
-		dataSource.RequestOfPage(query);
+		synchronized (mutexRequest) {
+			request = true;
+			queryRequest = Cache.getPage(dataSource.getHost(),dataSource.getSessionId(),
+					dataSource.getCursor().getCursorId(),pageIndex,
+					new Callback<CommandGetRecords.Response, Void>(){
+						@Override
+						public Void call(CommandGetRecords.Response r) {
+							records = null;
+							page = r.getPages().get(0);
+							if(after!=null) after.call(r);
+							setRequest(false);
+							dataSource.RequestOfPage(null);
+							return null;
+						}
+			},new Callback<Exception, Void>() {
+				@Override
+				public Void call(Exception ex) {
+					setRequest(false);
+					if(errorHandler!=null) errorHandler.call(ex);
+					dataSource.RequestOfPage(null);
+					return null;
+				}
+			});
+			dataSource.RequestOfPage(queryRequest);
+		}
 	}
 
 	public boolean isRequest() {
-		return request;
+		synchronized (mutexRequest) {
+			return request;
+		}
+	}
+
+	public void setRequest(boolean request) {
+		synchronized (mutexRequest) {
+			this.request = request;
+			if(!request) queryRequest = null;
+		}
+	}
+	
+	public void waitAlive() throws InterruptedException {
+		synchronized (mutexRequest) {
+			if(!isAlive() && queryRequest!=null) {
+				queryRequest.waitFinish();
+			}
+		}
+	}
+
+	public void fetch() {
+		requestPageData(null,null);
 	}
 
 

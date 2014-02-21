@@ -1,6 +1,7 @@
 package org.bebrb.client.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,6 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 		
 		cursor = null;
 		final Callback<Exception, Void> openError = new Callback<Exception, Void>() {
-
 			@Override
 			public Void call(Exception ex) {
 				// notify controls
@@ -190,8 +190,7 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 		eof = true;
 		// notify controls
 		for (ControlLink c : linkControls) c.linkActive(DataSourceImpl.this, ActiveMode.Closing); 
-		// TODO Auto-generated method stub
-		
+		cursor = null;
 	}
 
 	@Override
@@ -202,28 +201,76 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 
 	@Override
 	public Record findRecord(Object value, boolean onServer) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		Map<Attribute, Object> vmap = new HashMap<>();
+		vmap.put(getKey(), value);
+		List<Record> recs = forRecords(vmap,onServer,true);
+		return recs.size()>0?recs.get(0):null;
 	}
 
 	@Override
 	public Record findRecord(Object value) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return findRecord(value,false);
 	}
 
 	@Override
 	public List<Record> findRecord(Map<Attribute, Object> values,
 			boolean onServer) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return forRecords(values,onServer,false);
 	}
 
 	@Override
 	public List<Record> findRecord(Map<Attribute, Object> values)
 			throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return findRecord(values,false);
+	}
+
+	
+	private List<Record> forRecords(Map<Attribute, Object> values,
+			boolean onServer, boolean firsrRecord)  throws Exception {
+		List<Record> outrecs = new ArrayList<>();
+		
+		int[] mapIdx = new int[values.size()];
+		Object[] samples = values.values().toArray();
+		
+		int i = 0;
+		for (Attribute attr : values.keySet()) {
+			mapIdx[i] = attr.getFieldNo();
+			i++;
+		};
+		
+		List<DataPage> pages = cursor.getDataPages();
+		for (DataPage dp : pages) {
+			if(!dp.isAlive()) {
+				if(onServer) {
+					((DataPageImpl)dp).requestPageData(null, new Callback<Exception, Void>() {
+						@Override
+						public Void call(Exception ex) {
+							safeOpenCallback.onError(ex);
+							return null;
+						}
+					});
+					((DataPageImpl)dp).waitAlive();
+				} else
+					break; 
+			}
+			List<Record> recs = dp.getRecords();
+			for (Record r : recs) {
+				List<Object> vlist = r.getValues();
+				boolean predict = true;
+				for (int j = 0; j < mapIdx.length; j++) {
+					Object source = vlist.get(mapIdx[j]);
+					Object sample = samples[i];
+					predict = predict && source==null?sample==null:
+								sample==null?false:source.equals(sample);
+					if(!predict) break;
+				}
+				if(predict) {
+					outrecs.add(r);
+					if(firsrRecord) break;
+				}	
+			}
+		}
+		return outrecs;
 	}
 
 	@Override
@@ -327,7 +374,6 @@ public class DataSourceImpl extends BaseDataSetImpl implements DataSource, DataS
 			return refreshing;
 		}
 	}
-
 
 
 }

@@ -107,6 +107,10 @@ public class Client {
 		
 	}
 	
+	public void waitFinish() throws InterruptedException {
+		if(thread!=null) thread.join();
+	}
+	
 	public boolean isSync() {
 		return sync;
 	}
